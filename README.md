@@ -130,6 +130,11 @@ descriptions, build details, full workflow, quality-control checks, and
 troubleshooting. The LaTeX source is available at
 [manual/manual.tex](manual/manual.tex).
 
+The manual was drafted with OpenAI Codex, and most of the Bash scripts in
+this repository were written with Codex. Users are encouraged to use Codex
+when learning, adapting, or troubleshooting the workflow. Codex-generated
+suggestions should be reviewed and validated for the target HPC environment
+before production runs.
 
 ## Licensing
 
