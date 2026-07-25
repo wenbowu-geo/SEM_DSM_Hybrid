@@ -1,0 +1,9 @@
+1. Explosion source: Set COUPLING_TYPE=3 and SINGLE_FORCE_ENZ=-1. The first CMTSOLUTION component is interpreted as the explosion moment magnitude. Internally, it is treated as an Mrr component, converted from z-r-t to x−y−z coordinates and back again. Although these coordinate conversions are unnecessary for a purely scalar explosion source, they are retained to keep the source-handling framework uniform across all source types. The explosion moment magnitude remains unchanged through this process. This approach uses the fact that the r direction in Mrr represents the local vertical direction, which corresponds z direction of Mzz in the z-r-t coordinate system. Note that this equivalence does not hold for the N-E or r-t components.
+
+2. For fluid-solid interface (i.e., ICB and CMB) topography, the code may have problem for identifying which domain (fluid or solid) the element belongs to.
+The reason is that the curvature is so large that even the centroid location is not enough for correctly identification (error due to curvature
+is larger than half mesh size). To address this issue, either smooth the topography or make smaller element size.
+
+
+To do:
+1. The current implementation of explosion sources for deep-Earth coupling is somewhat convoluted. It should be refactored to isolate explosion-source handling into a dedicated, simplified routine.
