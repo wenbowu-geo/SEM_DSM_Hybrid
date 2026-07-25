@@ -135,6 +135,13 @@ constant_topography() {
   awk -v value="$value" -v nlines="$nlines" 'BEGIN { for (i=0; i<nlines; i++) print value }' > "$dst"
 }
 
+constant_topography_grid() {
+  local value=$1 nxi=$2 neta=$3 dst=$4
+  awk -v value="$value" -v nxi="$nxi" -v neta="$neta" 'BEGIN {
+    for (i=0; i<nxi*neta; i++) print value
+  }' > "$dst"
+}
+
 min_wave_speed_in_box() {
   local model=$1 bottom=$2 top=$3 earth=$4
   awk -v bottom="$bottom" -v top="$top" -v earth="$earth" '
@@ -524,6 +531,9 @@ else
   cd "$ROOT_DIR"
   exit 0
 fi
+
+# The dynamic mesh uses a flat 300 x 300 top interface at z=0.
+constant_topography_grid 0.0 300 300 "${MESHFEM_DIR}/topo_top.dat"
 
 MIN_WAVE_SPEED_KM_S=$(min_wave_speed_in_box "${DSM_MODEL}" "${BOTTOM_RADIUS_KM}" "${TOP_RADIUS_KM}" "${R_EARTH}") || {
   echo "Could not compute minimum wave speed from ${DSM_MODEL}" >&2

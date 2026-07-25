@@ -134,6 +134,13 @@ constant_topography() {
   awk -v value="$value" -v nlines="$nlines" 'BEGIN { for (i=0; i<nlines; i++) print value }' > "$dst"
 }
 
+constant_topography_grid() {
+  local value=$1 nxi=$2 neta=$3 dst=$4
+  awk -v value="$value" -v nxi="$nxi" -v neta="$neta" 'BEGIN {
+    for (i=0; i<nxi*neta; i++) print value
+  }' > "$dst"
+}
+
 min_wave_speed_in_box() {
   local model=$1 bottom=$2 top=$3 earth=$4
   awk -v bottom="$bottom" -v top="$top" -v earth="$earth" '
@@ -496,6 +503,9 @@ fi
 NEX_XI=$(round_up_multiple "${NEX_XI}" "${NPROC_XI}")
 NEX_ETA=$(round_up_multiple "${NEX_ETA}" "${NPROC_ETA}")
 NPROC=$((NPROC_XI * NPROC_ETA))
+
+# The top interface is flat at z=0 relative to the top of the SEM box.
+constant_topography_grid 0.0 300 300 "${MESHFEM_DIR}/topo_top.dat"
 
 INTERFACE_RADIUS=$(awk -v bottom="${BOTTOM_RADIUS_KM}" -v top="${TOP_RADIUS_KM}" '
   NF >= 2 && $1 ~ /^[-+0-9.]+([dDeE][-+0-9]+)?$/ && $2 ~ /^[-+0-9.]+([dDeE][-+0-9]+)?$/ {

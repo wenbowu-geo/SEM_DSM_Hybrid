@@ -134,6 +134,13 @@ constant_topography() {
   awk -v value="$value" -v nlines="$nlines" 'BEGIN { for (i=0; i<nlines; i++) print value }' > "$dst"
 }
 
+constant_topography_grid() {
+  local value=$1 nxi=$2 neta=$3 dst=$4
+  awk -v value="$value" -v nxi="$nxi" -v neta="$neta" 'BEGIN {
+    for (i=0; i<nxi*neta; i++) print value
+  }' > "$dst"
+}
+
 convert_interface_topography() {
   local interface_index=$1 src=$2 baseline=$3 dst=$4
   local margin
@@ -748,6 +755,10 @@ mv "${MESHFEM_DIR}/Mesh_Par_file.tmp" "${MESHFEM_DIR}/Mesh_Par_file"
 
 AUX_NXI=$(param AUX_INTERFACE_NXI 300)
 AUX_NETA=$(param AUX_INTERFACE_NETA 300)
+# The top interface is flat at z=0 relative to the top of the SEM box.
+# Generate it from the declared grid dimensions instead of relying on a
+# pre-existing template file.
+constant_topography_grid 0.0 "${AUX_NXI}" "${AUX_NETA}" "${MESHFEM_DIR}/topo_top.dat"
 ICB_NXI=$(param ICB_INTERFACE_NXI "${AUX_NXI}")
 ICB_NETA=$(param ICB_INTERFACE_NETA "${AUX_NETA}")
 AUX_DXI=$(awk -v w="${ANGULAR_WIDTH_XI}" -v n="${AUX_NXI}" 'BEGIN { printf "%.10fd0", w/(n-1) }')

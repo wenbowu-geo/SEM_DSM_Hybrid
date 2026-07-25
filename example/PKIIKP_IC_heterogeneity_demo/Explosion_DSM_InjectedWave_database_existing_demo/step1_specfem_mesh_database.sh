@@ -766,6 +766,10 @@ mv "${MESHFEM_DIR}/Mesh_Par_file.tmp" "${MESHFEM_DIR}/Mesh_Par_file"
 
 AUX_NXI=300
 AUX_NETA=300
+# The top interface is flat at z=0 relative to the top of the SEM box.
+# Generate it from the declared grid dimensions instead of relying on a
+# pre-existing template file.
+constant_topography_grid 0.0 "${AUX_NXI}" "${AUX_NETA}" "${MESHFEM_DIR}/topo_top.dat"
 ICB_NXI=420
 ICB_NETA=420
 AUX_DXI=$(awk -v w="${ANGULAR_WIDTH_XI}" -v n="${AUX_NXI}" 'BEGIN { printf "%.10fd0", w/(n-1) }')
