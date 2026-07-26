@@ -229,7 +229,7 @@ def main() -> None:
     parser.add_argument("--coupling-dir", default="Coupling/OUTPUT_FILES")
     parser.add_argument("--stations", default="Coupling/DATA/STATION")
     parser.add_argument("--cmt", default="SPECFEM3D/DATA/CMTSOLUTION")
-    parser.add_argument("--output-dir", default="3D_synthetics")
+    parser.add_argument("--output-dir", default="3D_synthetics_L2kmRMS0.02")
     parser.add_argument("--depth-index", type=int, default=0)
     parser.add_argument(
         "--injected-metadata",
