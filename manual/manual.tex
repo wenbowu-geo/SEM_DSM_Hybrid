@@ -5,11 +5,13 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
+\usepackage{array}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage[obeyspaces]{xurl}
 \usepackage[hidelinks]{hyperref}
 
 \graphicspath{{figures/}}
@@ -27,7 +29,9 @@
 
 \newcommand{\semdsm}{SEM--DSM}
 \newcommand{\specfem}{SPECFEM3D}
-\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\urlstyle{tt}
+\DeclareRobustCommand{\code}[1]{\nolinkurl{#1}}
 \newcommand{\dd}{\mathrm{d}}
 
 \title{\textbf{SEM--DSM Hybrid Method Manual}\\
@@ -52,10 +56,12 @@ heterogeneity, and the scattered wavefield recorded on an internal coupling
 boundary is extrapolated to teleseismic receivers with DSM Green's functions.
 
 The manual is written for users who want to run or adapt the example cases.
-The main user-facing workflow is controlled by a case directory containing
-\code{DATA/Par_file_SEM_DSM}, \code{DATA/CMTSOLUTION},
-\code{DATA/dsm_model_base}, \code{DATA/tele_station.txt}, auxiliary Python
-scripts, and shell scripts named \code{step*.sh}.
+The main user-facing workflow is controlled by a case directory. Its
+\code{DATA/} directory contains the configuration and Fortran model sources,
+including \code{model_tomography.f90} and \code{get_model.F90};
+\code{auxiliary/} contains the helper programs; and the \code{step*.sh}
+scripts drive the workflow. Each case has a Step~0 script that activates its
+SPECFEM3D database-model sources before the remaining workflow is run.
 
 \mainmatter
 
@@ -132,12 +138,16 @@ Example_case/
     Par_file_SEM_DSM
     CMTSOLUTION
     dsm_model_base
+    model_tomography.f90
+    get_model.F90
     tele_station.txt
   auxiliary/
+    select_generate_databases_model.sh
     prepare_src_to_box.py
     prepare_box_to_recv.py
     prepare_injected_waves.py
     assemble_3d_sem_dsm_synthetics.py
+  step0_prepare_*.sh
   step1_specfem_mesh_database.sh
   step2_3Dmodel_implementation.sh
   step3_submit_specfem_mesh_gen.sh
@@ -150,7 +160,12 @@ Example_case/
   step10_assemble_3d_sem_dsm_synthetics.sh
 \end{lstlisting}
 
-The scripts write generated products under \code{WORK/}. Large completed
+Each case contains one \code{step0_prepare_*.sh} script. The descriptive
+suffix varies with the example because Step~0 may also prepare topography or
+volumetric heterogeneity files.
+
+Steps~1--10 write most generated products under \code{WORK/}. Step~0 may
+also write case-specific structural inputs under \code{DATA/}. Large completed
 products, such as reusable DSM databases or final synthetics, are often saved
 as \code{OUTPUT_FILES_*} directories by individual examples.
 
@@ -190,19 +205,32 @@ make
 cd ../../SPECFEM3D
 ./configure FC=mpif90 CC=mpicc
 make xmeshfem3D
-make xgenerate_databases
 make xspecfem3D
 \end{lstlisting}
 
-Some examples use model-specific database generators, for example
-\code{xgenerate_databases_DSM1D}, \code{xgenerate_databases_ICB_Topo},
-\code{xgenerate_databases_PKIKP3D}, \code{xgenerate_databases_ULVZ}, or
-\code{xgenerate_databases_CMBtopo_CMBhetero}. Compile the generator needed by
-the selected example and make sure it is executable in \code{src/SPECFEM3D/bin}.
+Then change into the selected example directory and run its Step~0 script:
+\begin{lstlisting}
+./step0_prepare_*.sh --install
+\end{lstlisting}
+Each Step~0 selects a matching pair of Fortran source files. In the standardized
+DSM1D/DSM3D examples, it reads \code{DSM1D_OR_3D}. For \code{DSM3D}, \code{model_tomography.f90} and \code{get_model.F90}
+from the case-local \code{DATA/} directory are selected; for \code{DSM1D}, the shared pair in the bundled \code{1D_DSM} subdirectory of
+\code{model_tomo} is selected. Other model-specific cases
+install their case-local pair directly. The script copies both selected files
+into the SPECFEM3D \code{src/generate_databases} directory, invokes
+\code{make} to rebuild the generator, and verifies the canonical
+\code{bin/xgenerate_databases} executable. Model-suffixed database-generator
+executables are no longer selected by the examples.
+
+The active Fortran pair and \code{xgenerate_databases} are shared by all cases
+in one repository checkout. Rerun Step~0 for the intended case whenever you
+change cases, change \code{DSM1D_OR_3D}, or edit either Fortran source file.
+Do not prepare different cases concurrently against the same SPECFEM3D source
+tree.
 
 \section{Executables}
 
-\begin{longtable}{p{0.29\textwidth}p{0.62\textwidth}}
+\begin{longtable}{L{0.29\textwidth}L{0.62\textwidth}}
 \toprule
 Executable & Purpose \\
 \midrule
@@ -214,8 +242,8 @@ SAC files for 1-D synthetics. \\
 onto SEM boundary points, applies the selected time cut, and writes injected
 wavefield files. \\
 \code{xmeshfem3D} & Builds the cubed-sphere local SEM mesh. \\
-\code{xgenerate_databases*} & Generates the SEM databases and applies the
-selected 1-D or 3-D model. \\
+\code{xgenerate_databases} & Generates the SEM databases and applies the
+1-D or 3-D model installed by Step~0 for the selected case. \\
 \code{xspecfem3D} & Runs the local SEM solver with the injected incident
 wavefield. \\
 \code{coupling_integral} & Evaluates the representation integral using SEM
@@ -225,15 +253,22 @@ boundary displacement/traction and DSM box-to-receiver Green's functions. \\
 
 \section{Common compilation checks}
 
-After compilation, verify that the scripts can find the executables:
+After compiling the shared codes and running Step~0 for the selected case,
+return to the repository root and verify that the scripts can find the
+executables:
 \begin{lstlisting}
 test -x src/DSM/src/DSM_Solver/dsmti
 test -x src/DSM/src/DSM_FreqToTimeSac/spectotime
 test -x src/InjectedWaves/src/extract_Injectedwaves
 test -x src/Coupling/src/coupling_integral
 test -x src/SPECFEM3D/bin/xmeshfem3D
+test -x src/SPECFEM3D/bin/xgenerate_databases
 test -x src/SPECFEM3D/bin/xspecfem3D
 \end{lstlisting}
+
+From the case directory, \code{./step0_prepare_*.sh --check} additionally
+verifies that both active Fortran files match the selected case and that
+\code{xgenerate_databases} is not older than those sources.
 
 If a binary is installed in a nonstandard location, set the matching override
 in \code{DATA/Par_file_SEM_DSM}, for example
@@ -262,7 +297,7 @@ stored under \code{WORK/DSM}.
 
 The DSM controls live in \code{DATA/Par_file_SEM_DSM}. The most commonly
 changed parameters are:
-\begin{longtable}{p{0.34\textwidth}p{0.57\textwidth}}
+\begin{longtable}{L{0.40\textwidth}L{0.51\textwidth}}
 \toprule
 Parameter & Meaning \\
 \midrule
@@ -290,7 +325,7 @@ components \code{Fr} and \code{Ft}. \\
 \section{Source modes}
 
 The parameter \code{SINGLE_FORCE_ENZ} controls the source representation:
-\begin{longtable}{p{0.18\textwidth}p{0.72\textwidth}}
+\begin{longtable}{L{0.18\textwidth}L{0.72\textwidth}}
 \toprule
 Value & Meaning \\
 \midrule
@@ -367,7 +402,7 @@ cut times only when you have checked that the chosen window contains the
 entire incident wavefield.
 
 The relevant parameters are:
-\begin{longtable}{p{0.35\textwidth}p{0.56\textwidth}}
+\begin{longtable}{L{0.35\textwidth}L{0.56\textwidth}}
 \toprule
 Parameter & Meaning \\
 \midrule
@@ -410,7 +445,7 @@ is not specified.
 
 The SEM box is a local cubed-sphere block centered on the target structure.
 The main geometric controls are:
-\begin{longtable}{p{0.34\textwidth}p{0.57\textwidth}}
+\begin{longtable}{L{0.34\textwidth}L{0.57\textwidth}}
 \toprule
 Parameter & Meaning \\
 \midrule
@@ -440,28 +475,49 @@ conservative settings such as \code{ELEMENTS_PER_WAVELENGTH = 1.6} and
 \begin{itemize}
   \item \code{DSM1D}: use the 1-D DSM background model. This is the preferred
   consistency test. The scattered wavefield should be close to zero except for
-  numerical mismatch.
-  \item \code{DSM3D}: apply the case-specific 3-D model implementation in the
-  modified \specfem{} database generator.
+  numerical mismatch. Step~0 selects the bundled 1-D Fortran source pair.
+  \item \code{DSM3D}: apply the case-specific 3-D model implemented by
+  \code{DATA/model_tomography.f90} and \code{DATA/get_model.F90}.
 \end{itemize}
 
-For a new 3-D model, edit the model implementation used by the selected
-database generator, rebuild \specfem{}, and rerun the database generation
-steps.
+Step~0 copies the selected pair into the SPECFEM3D
+\code{src/generate_databases} directory as \code{model_tomography.f90} and
+\code{get_model.F90}, then rebuilds \code{bin/xgenerate_databases}. For a new
+or changed 3-D model, edit the case-local pair and rerun Step~0 with
+\code{--install} before regenerating the SEM databases.
 
 \section{Prepare and generate the mesh}
 
 Run:
 \begin{lstlisting}
+./step0_prepare_*.sh --install
 ./step1_specfem_mesh_database.sh
 ./step2_3Dmodel_implementation.sh
 ./step3_submit_specfem_mesh_gen.sh
 \end{lstlisting}
+\code{step0} installs both selected Fortran files, rebuilds
+\code{xgenerate_databases}, and prepares any case-specific structural inputs.
 \code{step1} prepares \code{WORK/SPECFEM3D/DATA}, calculates mesh settings,
 copies templates, writes \code{Par_file}, and generates the DSM model used by
 the SEM case. \code{step2} reports whether the case is using \code{DSM1D} or
-\code{DSM3D}. \code{step3} writes and submits the Slurm jobs for
-\code{xmeshfem3D} and \code{xgenerate_databases*}.
+\code{DSM3D}. \code{step3} verifies the active source pair and executable,
+then writes and submits the Slurm jobs for \code{xmeshfem3D} and the canonical
+\code{xgenerate_databases}.
+
+Stochastic-heterogeneity generators need a provisional effective SEM
+GLL-point spacing before the databases exist. Most cases read it from
+\code{HETEROGENEITY_DX_EFF_M}; some generators define \code{dx_eff} locally.
+After the \code{xgenerate_databases} job submitted by Step~3 finishes
+successfully, compare the configured value with
+\code{*** Max GLL point distance} in
+\code{WORK/SPECFEM3D/OUTPUT_FILES/output_mesher.txt}. If they differ
+significantly, update the configured value, rerun
+\code{generate_stochastic_heterogeneity_tiled_overlap.py} with
+\code{DATA/heterogeneities} as its working directory, then change to
+\code{WORK/SPECFEM3D} and resubmit
+\code{run_generate_databases.sbatch}. The existing mesh can be reused; Step~1
+and \code{xmeshfem3D} need not be rerun unless a mesh-setting parameter was
+also changed.
 
 Before continuing, check that the database directory exists:
 \begin{lstlisting}
@@ -526,7 +582,7 @@ Run:
 This script prepares \code{WORK/Coupling/DATA}, verifies that the DSM models
 used by the reusable products match the current case, creates the coupling
 parameter file, and submits \code{coupling_integral}. Important controls are:
-\begin{longtable}{p{0.36\textwidth}p{0.55\textwidth}}
+\begin{longtable}{L{0.36\textwidth}L{0.55\textwidth}}
 \toprule
 Parameter & Meaning \\
 \midrule
@@ -576,6 +632,7 @@ is not, check:
 The examples all follow the same pattern:
 \begin{lstlisting}
 # edit DATA/Par_file_SEM_DSM, DATA/CMTSOLUTION, DATA/tele_station.txt
+./step0_prepare_*.sh --install
 ./step1_specfem_mesh_database.sh
 ./step2_3Dmodel_implementation.sh
 ./step3_submit_specfem_mesh_gen.sh
@@ -593,6 +650,10 @@ The examples all follow the same pattern:
 ./step10_assemble_3d_sem_dsm_synthetics.sh
 \end{lstlisting}
 
+Step~0 must finish before the SEM mesh/database workflow. Run it again after
+switching cases or \code{DSM1D_OR_3D}, or after changing either case-local
+Fortran source file. Step~3 rejects an active source pair or
+\code{xgenerate_databases} executable that does not match the current case.
 Steps 4, 5, and 6 can usually run independently after the parameter files are
 ready. Step 7 requires both source-to-box DSM output and SEM databases. Step 8
 requires the injected wavefield. Step 9 requires the SEM solver output and
@@ -626,9 +687,10 @@ Use a box centered in the inner core along the PKIKP path. Set
 \code{PHASE_SOURCE_TO_BOX} and \code{PHASE_BOX_TO_RECEIVER} to include the
 internal-core phase family needed by the corner-arrival estimator, for example
 \code{PKI,PK}. For initial checks, set \code{DSM1D_OR_3D = DSM1D}. For the
-rotation experiment, switch to \code{DSM3D}, recompile the relevant
-\specfem{} database generator after modifying the model implementation, and
-rerun the database, solver, coupling, and assembly steps.
+rotation experiment, switch to \code{DSM3D}, edit the case-local
+\code{model_tomography.f90} and \code{get_model.F90} pair if needed, run
+\code{./step0_prepare_*.sh --install}, and rerun the database, solver,
+coupling, and assembly steps.
 
 \subsection{Reusing DSM products}
 
@@ -693,6 +755,11 @@ preparation, the topography is converted to the cubed-sphere interface format
 with \code{xcubedsphere_topo}. If the converter is missing, build or copy it
 into \code{src/SPECFEM3D/bin}.
 
+After setting \code{DSM1D_OR_3D}, run
+\code{./step0_prepare_model.sh --install}. In addition to installing the two
+Fortran sources and rebuilding \code{xgenerate_databases}, the \code{DSM3D}
+path generates the ICB topography input before mesh preparation.
+
 \subsection{Parameter choices}
 
 PKiKP is small, so numerical mismatch can be visible. Use the high-resolution
@@ -711,6 +778,7 @@ For a clean PKiKP topography run:
 \begin{lstlisting}
 # 1-D consistency check
 set DSM1D_OR_3D = DSM1D in DATA/Par_file_SEM_DSM
+./step0_prepare_model.sh --install
 ./step1_specfem_mesh_database.sh
 ./step3_submit_specfem_mesh_gen.sh
 ./step4_dsm_src_to_box.sh
@@ -723,6 +791,7 @@ set DSM1D_OR_3D = DSM1D in DATA/Par_file_SEM_DSM
 
 # 3-D ICB topography run
 set DSM1D_OR_3D = DSM3D in DATA/Par_file_SEM_DSM
+./step0_prepare_model.sh --install
 ./step1_specfem_mesh_database.sh
 ./step3_submit_specfem_mesh_gen.sh
 ./step8_specfem_solver.sh
@@ -757,7 +826,7 @@ the target structural signal plus the same numerical background.
 \backmatter
 \chapter{Troubleshooting}
 
-\begin{longtable}{p{0.32\textwidth}p{0.58\textwidth}}
+\begin{longtable}{L{0.32\textwidth}L{0.58\textwidth}}
 \toprule
 Symptom & Likely fix \\
 \midrule
@@ -768,7 +837,10 @@ or set \code{EXTRACT_INJECTEDWAVES_BIN}. \\
 \code{coupling_integral} not found & Build \code{src/Coupling/src} or set
 \code{COUPLING_INTEGRAL_BIN}. \\
 Injected-wave step stops because SEM depth tables are missing & Wait for
-\code{xmeshfem3D} and \code{xgenerate_databases*} to finish successfully. \\
+\code{xmeshfem3D} and \code{xgenerate_databases} to finish successfully. \\
+\code{xgenerate_databases} is missing, stale, or built for another case & Run
+\code{./step0_prepare_*.sh --install} from the intended case directory, then
+rerun Step~3. \\
 SPECFEM3D solver overflows & Reduce \code{SPECFEM3D_SOLVER_DT}, reduce the
 injected-wave frequency band, or inspect the injected-wave cut window. \\
 Large scattered waveform in \code{DSM1D} mode & Check DSM-model consistency,

@@ -41,7 +41,7 @@ ATTENUATION_TARGET_DEPTHS = .True.
 # DSM1D also helps evaluate SEM-DSM error:
 # the scattering wavefield should be zero for the 1-D background model.
 # DSM3D uses the 3-D DSM model and converts ICB topography with xcubedsphere_topo.
-DSM1D_OR_3D = DSM1D
+DSM1D_OR_3D = DSM3D
 
 # 1 = forward, 2 = adjoint, 3 = forward and adjoint.
 SIMULATION_TYPE = 1
@@ -131,12 +131,15 @@ ANGULAR_WIDTH_ETA_IN_DEGREES = 20.0
 # ICB_AUX_ELEMENTS_FROM_COUPLING = 1
 ICB_TOPOGRAPHY_FILE = DATA/topo_files/latlon_ICB_topo.txt
 # ICB_TOPOGRAPHY_TRUNCATION_MARGIN_M = 40000.0
-# Effective SEM grid spacing used to filter stochastic heterogeneity before the
-# mesh exists. After step1, update from OUTPUT_FILES/output_mesher.txt and
-# regenerate tiles if the actual maximum GLL spacing is significantly different.
+# Effective SEM GLL-point spacing used by Step 0 to filter stochastic
+# heterogeneity. Use this estimate for the initial pass. After the
+# xgenerate_databases job submitted by Step 3 finishes successfully, compare it
+# with "*** Max GLL point distance" in
+# WORK/SPECFEM3D/OUTPUT_FILES/output_mesher.txt. If significantly different,
+# update this value, regenerate the heterogeneity tiles, and rerun
+# xgenerate_databases using the existing mesh.
 HETEROGENEITY_DX_EFF_M = 3000.0
 TOMOGRAPHY_PATH = DATA/heterogeneities/tiles
-# SPECFEM3D_DATABASE_BIN =
 
 # -----------------------------------------------------------------------------
 # Mesh style

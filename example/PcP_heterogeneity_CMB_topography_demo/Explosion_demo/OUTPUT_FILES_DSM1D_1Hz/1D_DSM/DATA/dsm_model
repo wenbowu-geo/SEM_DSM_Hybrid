@@ -1,4 +1,4 @@
-3000.0 4096  #time_series_length n_freqnency
+4001.0 4096  #time_series_length n_freqnency
 1.1d-3         #omega_imag
   60000     0   24000 #ngrid_r lmin lmax
   12   #n_structure_zone                                                        

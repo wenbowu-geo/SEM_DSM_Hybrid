@@ -26,6 +26,8 @@ WORK_DIR="${ROOT_DIR}/WORK/SPECFEM3D"
 DATA_DIR="${WORK_DIR}/DATA"
 SEM_DSM_PARAM_FILE="${ROOT_DIR}/DATA/Par_file_SEM_DSM"
 PAR_FILE="${DATA_DIR}/Par_file"
+MESH_PAR_FILE="${DATA_DIR}/meshfem3D_files/Mesh_Par_file"
+STEP1_COMPLETE_FILE="${WORK_DIR}/.step1_complete"
 OUTPUT_DIR="${WORK_DIR}/OUTPUT_FILES"
 BIN_DIR="$(cd "${ROOT_DIR}/../../../src/SPECFEM3D/bin" && pwd)"
 
@@ -38,6 +40,16 @@ echo "----------------------------------------------------------------------"
 if [[ ! -f "${PAR_FILE}" ]]; then
     echo "Error: SPECFEM3D parameter file '${PAR_FILE}' not found."
     echo "Please run Step 1 first."
+    exit 1
+fi
+if [[ ! -f "${MESH_PAR_FILE}" ]]; then
+    echo "Error: SPECFEM3D mesh parameter file '${MESH_PAR_FILE}' not found."
+    echo "Please run Step 1 first."
+    exit 1
+fi
+if [[ ! -f "${STEP1_COMPLETE_FILE}" ]]; then
+    echo "Error: Step 1 did not complete successfully for this case." >&2
+    echo "Run './step1_specfem_mesh_database.sh' and resolve any reported error before Step 3." >&2
     exit 1
 fi
 
@@ -83,9 +95,12 @@ if [[ -n "${SLURM_QOS}" ]]; then
   SBATCH_QOS_DIRECTIVE="#SBATCH --qos=${SLURM_QOS}"
 fi
 
-# Read NPROC from Par_file
-NPROC=$(awk -F= '
-  $0 !~ /^[[:space:]]*#/ && $1 ~ /^[[:space:]]*NPROC[[:space:]]*$/ {
+# Read and cross-check the processor counts prepared by Step 1.
+read_required_param() {
+  local key=$1
+  local file=$2
+  awk -F= -v key="${key}" '
+  $0 !~ /^[[:space:]]*#/ && $1 ~ "^[[:space:]]*" key "[[:space:]]*$" {
     v=$2
     sub(/#.*/, "", v)
     gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
@@ -94,23 +109,70 @@ NPROC=$(awk -F= '
     exit
   }
   END { if (!found) exit 1 }
-' "${PAR_FILE}") || { echo "Could not read NPROC from ${PAR_FILE}" >&2; exit 1; }
+' "${file}"
+}
 
-DATABASE_BIN=$(param_sem_dsm SPECFEM3D_DATABASE_BIN "")
-if [[ -z "${DATABASE_BIN}" ]]; then
-  if [[ "${DSM1D_OR_3D}" == "DSM1D" ]]; then
-    DATABASE_BIN="${BIN_DIR}/xgenerate_databases_DSM1D"
-  elif [[ -x "${BIN_DIR}/xgenerate_databases_ICB_Topo" ]]; then
-    DATABASE_BIN="${BIN_DIR}/xgenerate_databases_ICB_Topo"
-  else
-    DATABASE_BIN="${BIN_DIR}/xgenerate_databases"
+NPROC=$(read_required_param NPROC "${PAR_FILE}") || \
+  { echo "Could not read NPROC from ${PAR_FILE}" >&2; exit 1; }
+NPROC_XI=$(read_required_param NPROC_XI "${MESH_PAR_FILE}") || \
+  { echo "Could not read NPROC_XI from ${MESH_PAR_FILE}" >&2; exit 1; }
+NPROC_ETA=$(read_required_param NPROC_ETA "${MESH_PAR_FILE}") || \
+  { echo "Could not read NPROC_ETA from ${MESH_PAR_FILE}" >&2; exit 1; }
+
+for count_name in NPROC NPROC_XI NPROC_ETA; do
+  count_value=${!count_name}
+  if [[ ! "${count_value}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Error: ${count_name} must be a positive integer, got '${count_value}'." >&2
+    exit 1
   fi
-elif [[ "${DATABASE_BIN}" != /* ]]; then
-  DATABASE_BIN="${BIN_DIR}/${DATABASE_BIN}"
+done
+
+EXPECTED_NPROC=$((NPROC_XI * NPROC_ETA))
+if (( NPROC != EXPECTED_NPROC )); then
+  echo "Error: inconsistent SPECFEM3D processor counts." >&2
+  echo "  Par_file: NPROC=${NPROC}" >&2
+  echo "  Mesh_Par_file: NPROC_XI=${NPROC_XI}, NPROC_ETA=${NPROC_ETA}, product=${EXPECTED_NPROC}" >&2
+  echo "Run './step1_specfem_mesh_database.sh' and ensure it completes before Step 3." >&2
+  exit 1
 fi
-[[ -x "${DATABASE_BIN}" ]] || { echo "Error: database generator not executable: ${DATABASE_BIN}" >&2; exit 1; }
+
+SPECFEM_ROOT="$(cd "${BIN_DIR}/.." && pwd)"
+MODEL_SETUP_HELPER="${ROOT_DIR}/auxiliary/select_generate_databases_model.sh"
+
+if [[ ! -f "${MODEL_SETUP_HELPER}" ]]; then
+  echo "Error: model-selection helper is missing: ${MODEL_SETUP_HELPER}" >&2
+  exit 1
+fi
+
+# shellcheck source=auxiliary/select_generate_databases_model.sh
+source "${MODEL_SETUP_HELPER}"
+select_generate_databases_model "${ROOT_DIR}" "${SPECFEM_ROOT}" "${DSM1D_OR_3D}"
+DATABASE_BIN="${GENERATOR}"
+
+for source_file in "${CASE_MODEL}" "${CASE_GET_MODEL}"; do
+  if [[ ! -f "${source_file}" ]]; then
+    echo "Error: required case model source is missing: ${source_file}" >&2
+    echo "Check the selected case model sources for ${DSM1D_OR_3D}." >&2
+    exit 1
+  fi
+done
+
+if ! cmp -s "${CASE_MODEL}" "${ACTIVE_MODEL}" || \
+   ! cmp -s "${CASE_GET_MODEL}" "${ACTIVE_GET_MODEL}"; then
+  echo "Error: active SPECFEM3D model sources do not match this case." >&2
+  echo "Run './step0_prepare_model.sh --install' before Step 3." >&2
+  exit 1
+fi
+
+if [[ ! -x "${DATABASE_BIN}" || "${ACTIVE_MODEL}" -nt "${DATABASE_BIN}" || \
+      "${ACTIVE_GET_MODEL}" -nt "${DATABASE_BIN}" ]]; then
+  echo "Error: xgenerate_databases is missing or older than the active model sources." >&2
+  echo "Run './step0_prepare_model.sh --install' before Step 3." >&2
+  exit 1
+fi
 
 echo "Detected NPROC=${NPROC}"
+echo "Mesh processor grid: ${NPROC_XI} x ${NPROC_ETA}"
 echo "DSM1D_OR_3D=${DSM1D_OR_3D}"
 echo "Database generator: ${DATABASE_BIN}"
 

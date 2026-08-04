@@ -19,6 +19,7 @@ BIN_DIR="$(cd "${ROOT_DIR}/../../../src/SPECFEM3D/bin" && pwd)"
 MESHFEM_DIR="${DATA_DIR}/meshfem3D_files"
 DSM_MODEL="${DATA_DIR}/dsm_model_input"
 DSM_MODEL_BASE="${ROOT_DIR}/DATA/dsm_model_base"
+STEP1_COMPLETE_FILE="${WORK_DIR}/.step1_complete"
 
 echo "----------------------------------------------------------------------"
 echo "Starting Step 1: SPECFEM3D Preparation and Execution"
@@ -139,6 +140,80 @@ constant_topography_grid() {
   awk -v value="$value" -v nxi="$nxi" -v neta="$neta" 'BEGIN {
     for (i=0; i<nxi*neta; i++) print value
   }' > "$dst"
+}
+
+pad_latlon_topography() {
+  local src=$1 dst=$2 margin=$3 baseline=$4
+  awk -v margin="$margin" -v baseline="$baseline" '
+    function repeated(value, count,    i, line) {
+      line=""
+      for (i=1; i<=count; i++) line=line (i == 1 ? "" : " ") value
+      return line
+    }
+    NR == 1 {
+      nlon=int($1)
+      nlat=int($2)
+      if (NF < 2 || nlon < 2 || nlat < 2) bad="invalid grid dimensions"
+      next
+    }
+    NR == 2 {
+      lon0=$1+0.0
+      lat0=$2+0.0
+      next
+    }
+    NR == 3 {
+      dlon=$1+0.0
+      dlat=$2+0.0
+      if (dlon <= 0.0 || dlat <= 0.0) bad="grid spacing must be positive"
+      if (margin < 0.0) bad="padding margin must be nonnegative"
+      next
+    }
+    NR > 3 {
+      row_count++
+      if (NF != nlon) {
+        printf "Error: topography row %d has %d values; expected %d.\n", row_count, NF, nlon > "/dev/stderr"
+        bad="malformed topography data"
+      }
+      rows[row_count]=$0
+    }
+    END {
+      if (bad != "") {
+        print "Error: cannot pad " FILENAME ": " bad > "/dev/stderr"
+        exit 1
+      }
+      if (row_count != nlat) {
+        printf "Error: %s has %d data rows; expected %d.\n", FILENAME, row_count, nlat > "/dev/stderr"
+        exit 1
+      }
+
+      pad_lon=int(margin/dlon)
+      if (pad_lon*dlon < margin - 1.0e-10) pad_lon++
+      pad_lat=int(margin/dlat)
+      if (pad_lat*dlat < margin - 1.0e-10) pad_lat++
+
+      out_nlon=nlon+2*pad_lon
+      out_nlat=nlat+2*pad_lat
+      out_lon0=lon0-pad_lon*dlon
+      out_lat0=lat0-pad_lat*dlat
+      out_lon1=lon0+(nlon-1+pad_lon)*dlon
+      out_lat1=lat0+(nlat-1+pad_lat)*dlat
+
+      printf "%d %d\n", out_nlon, out_nlat
+      printf "%.10f %.10f %.10f %.10f\n", out_lon0, out_lat0, out_lon1, out_lat1
+      printf "%.10f %.10f\n", dlon, dlat
+
+      edge_row=repeated(baseline, out_nlon)
+      for (i=1; i<=pad_lat; i++) print edge_row
+
+      side=repeated(baseline, pad_lon)
+      for (i=1; i<=nlat; i++) {
+        if (pad_lon > 0) print side " " rows[i] " " side
+        else print rows[i]
+      }
+
+      for (i=1; i<=pad_lat; i++) print edge_row
+    }
+  ' "$src" > "$dst"
 }
 
 convert_interface_topography() {
@@ -560,6 +635,7 @@ nz_from_wavelength() {
 # --- 3. Main Logic ---
 
 # Prepare DATA directory
+rm -f "${STEP1_COMPLETE_FILE}"
 copy_template_data
 mkdir -p "${MESHFEM_DIR}"
 find "${MESHFEM_DIR}" -maxdepth 1 -type f -name 'topo_*.dat' ! -name 'topo_top.dat' -delete
@@ -710,7 +786,10 @@ if [[ "${ICB_TOPO_SOURCE}" != /* ]]; then
 fi
 if [[ "${DSM1D_OR_3D}" == "DSM3D" ]]; then
   [[ -f "${ICB_TOPO_SOURCE}" ]] || { echo "Missing ICB topography source: ${ICB_TOPO_SOURCE}" >&2; exit 1; }
-  cp "${ICB_TOPO_SOURCE}" "${MESHFEM_DIR}/latlon_interface_topo.txt"
+  ICB_TOPO_LATLON_MARGIN=$(to_float "$(param ICB_TOPOGRAPHY_LATLON_MARGIN_DEGREES 2.0)")
+  echo "Padding ICB topography coverage by ${ICB_TOPO_LATLON_MARGIN} degrees for cubed-sphere conversion."
+  pad_latlon_topography "${ICB_TOPO_SOURCE}" "${MESHFEM_DIR}/latlon_interface_topo.txt" \
+    "${ICB_TOPO_LATLON_MARGIN}" "${Z_ICB}"
 fi
 
 replace_key "${DATA_DIR}/Par_file" MODEL "${DSM1D_OR_3D}"
@@ -821,6 +900,8 @@ constant_topography "${Z_ABOVE_ICB_AUX}" "${MESHFEM_DIR}/topo_top.dat" "${MESHFE
 awk -v lat="${CENTER_LAT}" -v lon="${CENTER_LON}" 'BEGIN {
   printf "%-8s %-8s %12.6f %12.6f %8.3f %8.3f\n", "DE", "CENTER", lat, lon, 0.0, 0.0
 }' > "${DATA_DIR}/STATIONS"
+
+touch "${STEP1_COMPLETE_FILE}"
 
 # Summary of preparation
 echo "----------------------------------------------------------------------"

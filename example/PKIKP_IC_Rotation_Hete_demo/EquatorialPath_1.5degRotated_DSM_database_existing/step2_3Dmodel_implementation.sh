@@ -7,8 +7,17 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARAM_FILE="${ROOT_DIR}/DATA/Par_file_SEM_DSM"
-SRC_PATH="${ROOT_DIR}/../../src/SPECFEM3D/src/generate_databases/model_tomography.f90"
-DEMO_SPECIFIC_PATH="${SRC_PATH}"
+REPO_ROOT="$(cd "${ROOT_DIR}/../../.." && pwd)"
+SPECFEM_ROOT="${REPO_ROOT}/src/SPECFEM3D"
+MODEL_SETUP_HELPER="${ROOT_DIR}/auxiliary/select_generate_databases_model.sh"
+
+if [[ ! -f "${MODEL_SETUP_HELPER}" ]]; then
+  echo "Error: model-selection helper is missing: ${MODEL_SETUP_HELPER}" >&2
+  exit 1
+fi
+
+# shellcheck source=auxiliary/select_generate_databases_model.sh
+source "${MODEL_SETUP_HELPER}"
 
 param() {
   local key=$1
@@ -34,6 +43,7 @@ param() {
 
 DSM1D_OR_3D=$(param DSM1D_OR_3D DSM3D)
 DSM1D_OR_3D=$(printf '%s' "${DSM1D_OR_3D}" | tr '[:lower:]' '[:upper:]')
+select_generate_databases_model "${ROOT_DIR}" "${SPECFEM_ROOT}" "${DSM1D_OR_3D}"
 
 cat <<EOF_HEADER
 ----------------------------------------------------------------------
@@ -59,18 +69,15 @@ wavefield should be near zero for the 1-D background model.
 EOF_DSM1D
 elif [[ "${DSM1D_OR_3D}" == "DSM3D" ]]; then
 cat <<EOF_DSM3D
-If you want to use your own 3-D model, modify the implementation in:
-  ${SRC_PATH}
+This case keeps its SPECFEM3D model source pair in:
+  ${CASE_MODEL}
+  ${CASE_GET_MODEL}
 
-For this demo, the 3-D model implementation lives in:
-  ${DEMO_SPECIFIC_PATH}
+Step 0 installs both files into SPECFEM3D and rebuilds the canonical
+xgenerate_databases executable. After editing either source, rerun:
+  ./step0_prepare_icb_topography_heterogeneity.sh --install
 
-That file contains the model implementation used by xgenerate_databases.
-After modifying the source code, you must recompile the SPECFEM3D code
-before running Step 1 (creating the mesh and generating the databases).
-
-The current implementation is already set up for this demo,
-so this demo can move directly to the next step.
+Step 2 does not modify the active SPECFEM3D source tree.
 ----------------------------------------------------------------------
 EOF_DSM3D
 else

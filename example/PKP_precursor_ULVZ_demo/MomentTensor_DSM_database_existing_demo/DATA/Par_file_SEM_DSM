@@ -10,10 +10,10 @@
 
 # Shared Slurm queue controls for all generated sbatch/cmd files.
 # Leave blank to use the cluster defaults.
-SLURM_PARTITION = scavenger
-SLURM_QOS = scavenger
-#SLURM_PARTITION = 
-#SLURM_QOS = 
+#SLURM_PARTITION = scavenger
+#SLURM_QOS = scavenger
+SLURM_PARTITION = 
+SLURM_QOS = 
 
 # Earth radius used by the cubed-sphere geometry and DSM velocity polynomials.
 R_EARTH = 6371.0

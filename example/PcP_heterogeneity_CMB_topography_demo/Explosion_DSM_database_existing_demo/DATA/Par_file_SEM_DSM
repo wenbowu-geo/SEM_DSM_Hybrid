@@ -7,10 +7,10 @@
 
 # Shared Slurm queue controls for all generated sbatch/cmd files.
 # Leave blank to use the cluster defaults.
-SLURM_PARTITION = scavenger
-SLURM_QOS = scavenger
-#SLURM_PARTITION = 
-#SLURM_QOS = 
+#SLURM_PARTITION = scavenger
+#SLURM_QOS = scavenger
+SLURM_PARTITION = 
+SLURM_QOS = 
 
 # Earth radius used by the cubed-sphere geometry and DSM velocity polynomials.
 R_EARTH = 6371.0
@@ -134,7 +134,6 @@ CMB_TOPOGRAPHY_FILE = DATA/topo_files/latlon_CMB_topo.txt
 # CMB_TOPOGRAPHY_TRUNCATION_MARGIN_M = 40000.0
 # Directory containing tomography_model_box*.xyz CMB heterogeneity tiles.
 TOMOGRAPHY_PATH = DATA/heterogeneities/tiles
-# SPECFEM3D_DATABASE_BIN =
 
 # -----------------------------------------------------------------------------
 # Mesh style

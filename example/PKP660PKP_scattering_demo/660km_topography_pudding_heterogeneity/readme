@@ -13,14 +13,13 @@ Current setup:
 - DATA/old_reference stores old Par_file, Mesh_Par_file, Coupling_Par_file, and InjectedWaves Par_file snapshots.
 - DATA/meshfem3D_files stores the old static 25/660/735/top interface files.
 - DATA/heterogeneities stores the old pudding heterogeneity helper scripts and a link to the saved tomography_model.xyz.
-- step0_prepare_660km_heterogeneity.sh stages DATA/heterogeneities. By default it links the saved old-version tomography_model.xyz instead of copying the 24 GB file.
+- step0_prepare_660km_heterogeneity.sh selects the source pair from DSM1D_OR_3D, cleans and builds the canonical xgenerate_databases, and stages DATA/heterogeneities only for DSM3D. DSM1D builds from src/SPECFEM3D/src/generate_databases/model_tomo/1D_DSM and does not require tomography_model.xyz. DSM3D links the saved old-version tomography_model.xyz instead of copying the 24 GB file.
 - step1_specfem_mesh_database.sh uses USE_STATIC_MESHFEM3D_FILES=.true. to preserve the old four-interface all-elastic mesh.
-- step2_3Dmodel_implementation.sh installs the 660 km pudding model source from src/SPECFEM3D/src/generate_databases/model_tomo/660km_topography_pudding_heterogeneity into the active xgenerate_databases source files.
+- step2_3Dmodel_implementation.sh documents the case model sources and does not modify the active SPECFEM3D source tree.
 
 Run order:
 1. ./step0_prepare_660km_heterogeneity.sh
 2. ./step1_specfem_mesh_database.sh
 3. ./step2_3Dmodel_implementation.sh
-4. Rebuild xgenerate_databases if needed: make xgenerate_databases in ../../../src/SPECFEM3D
-5. ./step3_submit_specfem_mesh_gen.sh
-6. Continue with steps 4-10 after mesh/database outputs are available.
+4. ./step3_submit_specfem_mesh_gen.sh
+5. Continue with steps 4-10 after mesh/database outputs are available.

@@ -41,7 +41,7 @@ ATTENUATION_TARGET_DEPTHS = .False.
 # DSM1D uses the 1-D DSM background model.
 # DSM3D uses the 3-D DSM model. PKP_ULVZ has no interface topography,
 # so both modes use the same flat SPECFEM interfaces.
-DSM1D_OR_3D = DSM1D
+DSM1D_OR_3D = DSM3D
 
 # 1 = forward, 2 = adjoint, 3 = forward and adjoint.
 SIMULATION_TYPE = 1

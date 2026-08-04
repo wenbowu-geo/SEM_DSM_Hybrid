@@ -42,7 +42,7 @@ ATTENUATION_TARGET_DEPTHS = .False.
 # DSM1D also helps evaluate SEM-DSM error:
 # the scattering wavefield should be zero for the 1-D background model.
 # DSM3D uses the 3-D DSM model and converts CMB topography with xcubedsphere_topo.
-DSM1D_OR_3D = DSM1D
+DSM1D_OR_3D = DSM3D
 
 # 1 = forward, 2 = adjoint, 3 = forward and adjoint.
 SIMULATION_TYPE = 1
@@ -134,7 +134,6 @@ CMB_TOPOGRAPHY_FILE = DATA/topo_files/latlon_CMB_topo.txt
 # CMB_TOPOGRAPHY_TRUNCATION_MARGIN_M = 40000.0
 # Directory containing tomography_model_box*.xyz CMB heterogeneity tiles.
 TOMOGRAPHY_PATH = DATA/heterogeneities/tiles
-# SPECFEM3D_DATABASE_BIN =
 
 # -----------------------------------------------------------------------------
 # Mesh style

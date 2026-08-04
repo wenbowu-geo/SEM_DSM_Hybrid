@@ -22,7 +22,7 @@ overlap_xy = 40e3                # overlap width (m)
 
 rms = 0.02
 Lcorr = 12000.0                  # correlation length (m)
-random_seed = 12345              # fixed seed for reproducible heterogeneity tiles
+random_seed = 22345              # fixed seed for reproducible heterogeneity tiles
 
 VP_MIN, VP_MAX = 500.0, 14000.0
 VS_MIN, VS_MAX = 300.0, 8000.0
@@ -61,11 +61,13 @@ width_xi = param_float(params, "ANGULAR_WIDTH_XI_IN_DEGREES", 0.0)
 width_eta = param_float(params, "ANGULAR_WIDTH_ETA_IN_DEGREES", 0.0)
 lat_center = param_float(params, "CENTER_LATITUDE_IN_DEGREES", 0.0)
 lon_center = param_float(params, "CENTER_LONGITUDE_IN_DEGREES", 0.0)
-# Effective SEM grid spacing used to remove heterogeneity wavelengths that the
-# SEM mesh cannot resolve. The exact max GLL spacing is only known after mesh
-# generation, but these heterogeneity files are needed before meshing. Use the
-# Par_file value as a conservative first pass; after step1, update it from
-# output_mesher.txt and regenerate the tiles if needed.
+# Effective SEM GLL-point spacing used to remove heterogeneity wavelengths that
+# the SEM mesh cannot resolve. Before the SEM databases exist, use the Par_file
+# value as an initial estimate. After the xgenerate_databases job
+# submitted by Step 3 finishes successfully, compare it with
+# "*** Max GLL point distance" in WORK/SPECFEM3D/OUTPUT_FILES/output_mesher.txt.
+# If significantly different, update the Par_file value, regenerate the tiles,
+# and rerun xgenerate_databases using the existing mesh.
 dx_eff = param_float(params, "HETEROGENEITY_DX_EFF_M", 2.0 * dx)
 r_top = R_EARTH_M - center_depth_m + 0.5 * depth_block_m
 r_center = R_EARTH_M - center_depth_m

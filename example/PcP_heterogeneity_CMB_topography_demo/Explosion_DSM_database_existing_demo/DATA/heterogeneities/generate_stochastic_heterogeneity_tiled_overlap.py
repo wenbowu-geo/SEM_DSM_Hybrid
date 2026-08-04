@@ -31,8 +31,13 @@ RHO_MIN, RHO_MAX = 1000.0, 10000.0
 
 np.random.seed(random_seed)
 
-# The maximum GLL spacing is available in the SPECFEM3D output file output_mesher.txt.
-dx_eff = 1849.0                  # SEM effective grid spacing (features smaller than dx_eff filtered out)
+# Effective SEM GLL-point spacing used to filter stochastic heterogeneity.
+# After the xgenerate_databases job submitted by Step 3 finishes successfully,
+# compare this estimate with "*** Max GLL point distance" in
+# WORK/SPECFEM3D/OUTPUT_FILES/output_mesher.txt. If significantly different,
+# update dx_eff, regenerate the tiles, and rerun xgenerate_databases using the
+# existing mesh.
+dx_eff = 1849.0                  # effective SEM GLL-point spacing (m)
 
 # =====================================================
 # CASE GEOMETRY FROM Par_file_SEM_DSM

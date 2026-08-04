@@ -134,12 +134,15 @@ ANGULAR_WIDTH_ETA_IN_DEGREES = 90.0
 ICB_TOPOGRAPHY_FILE = DATA/topo_files/latlon_ICB_topo.txt
 # ICB_TOPOGRAPHY_TRUNCATION_MARGIN_M = 40000.0
 # Directory containing tomography_model_box*.xyz inner-core heterogeneity tiles.
-# Effective SEM grid spacing used to filter stochastic heterogeneity before the
-# mesh exists. After step1, update from OUTPUT_FILES/output_mesher.txt and
-# regenerate tiles if the actual maximum GLL spacing is significantly different.
-HETEROGENEITY_DX_EFF_M = 3000.0
+# Effective SEM GLL-point spacing used by Step 0 to filter stochastic
+# heterogeneity. Use this estimate for the initial pass. After the
+# xgenerate_databases job submitted by Step 3 finishes successfully, compare it
+# with "*** Max GLL point distance" in
+# WORK/SPECFEM3D/OUTPUT_FILES/output_mesher.txt. If significantly different,
+# update this value, regenerate the heterogeneity tiles, and rerun
+# xgenerate_databases using the existing mesh.
+HETEROGENEITY_DX_EFF_M = 1500.0
 TOMOGRAPHY_PATH = DATA/heterogeneities/tiles
-# SPECFEM3D_DATABASE_BIN =
 
 # -----------------------------------------------------------------------------
 # Mesh style

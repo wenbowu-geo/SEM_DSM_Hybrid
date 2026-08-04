@@ -473,10 +473,14 @@ if is_false "${USE_STATIC_MESHFEM3D_FILES}"; then
   :
 else
   echo "Using static old-version meshfem3D files for this 660 km case."
-  if [[ ! -f "${HETERO_DIR}/tomography_model.xyz" ]]; then
-    echo "Missing ${HETERO_DIR}/tomography_model.xyz" >&2
-    echo "Run ./step0_prepare_660km_heterogeneity.sh before step1." >&2
-    exit 1
+  if [[ "${DSM1D_OR_3D}" == "DSM3D" ]]; then
+    if [[ ! -f "${HETERO_DIR}/tomography_model.xyz" ]]; then
+      echo "Missing ${HETERO_DIR}/tomography_model.xyz" >&2
+      echo "Run ./step0_prepare_660km_heterogeneity.sh before step1." >&2
+      exit 1
+    fi
+  else
+    echo "DSM1D selected: using the flat static layer interfaces; no pudding tomography model is required."
   fi
   cp "${ROOT_DIR}/DATA/old_reference/Mesh_Par_file.old" "${MESHFEM_DIR}/Mesh_Par_file"
   cp "${ROOT_DIR}/DATA/old_reference/Coupling_Par_file.old" "${MESHFEM_DIR}/Coupling_Par_file"
@@ -515,7 +519,9 @@ else
   replace_key "${DATA_DIR}/Par_file" DT "$(param SPECFEM3D_SOLVER_DT 0.011)"
   replace_key "${DATA_DIR}/Par_file" SAVE_MESH_FILES "${SAVE_MESH_FILES}"
   replace_key "${DATA_DIR}/Par_file" ATTENUATION "${ATTENUATION_TARGET_DEPTHS}"
-  replace_key "${DATA_DIR}/Par_file" TOMOGRAPHY_PATH "${HETERO_DIR}"
+  if [[ "${DSM1D_OR_3D}" == "DSM3D" ]]; then
+    replace_key "${DATA_DIR}/Par_file" TOMOGRAPHY_PATH "${HETERO_DIR}"
+  fi
   replace_key "${DATA_DIR}/Par_file" INJECTED_WAVEFIELD_PATH "${ROOT_DIR}/WORK/InjectedWaves/OUTPUT_FILES"
 
   echo "----------------------------------------------------------------------"
@@ -523,7 +529,11 @@ else
   summary_line "Prepared static old-version SPECFEM3D mesh/database inputs in ${DATA_DIR}"
   summary_line "  MODEL=${DSM1D_OR_3D}"
   summary_line "  NPROC=${STATIC_NPROC}, NPROC_XI=${STATIC_NPROC_XI}, NPROC_ETA=${STATIC_NPROC_ETA}"
-  summary_line "  TOMOGRAPHY_PATH=${HETERO_DIR}"
+  if [[ "${DSM1D_OR_3D}" == "DSM3D" ]]; then
+    summary_line "  TOMOGRAPHY_PATH=${HETERO_DIR}"
+  else
+    summary_line "  3-D pudding tomography disabled"
+  fi
   summary_line "  static interfaces=topo_25km.dat, topo_660km.dat, topo_735km.dat, topo_top.dat"
   echo "----------------------------------------------------------------------"
   echo "Step 1: Preparation complete. Move to Step 2 or Step 3."

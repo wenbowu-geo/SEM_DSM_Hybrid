@@ -131,15 +131,40 @@ if [[ -f "${MESH_PAR_FILE}" ]]; then
   fi
 fi
 
-DATABASE_BIN_OVERRIDE=$(param_sem_dsm SPECFEM3D_DATABASE_BIN "")
-if [[ -n "${DATABASE_BIN_OVERRIDE}" ]]; then
-  DATABASE_BIN="${DATABASE_BIN_OVERRIDE}"
-elif [[ "${DSM1D_OR_3D}" == "DSM1D" ]]; then
-  DATABASE_BIN="${BIN_DIR}/xgenerate_databases_DSM1D"
-else
-  DATABASE_BIN="${BIN_DIR}/xgenerate_databases_660km_hete_puding"
+SPECFEM_ROOT="$(cd "${BIN_DIR}/.." && pwd)"
+MODEL_SETUP_HELPER="${ROOT_DIR}/auxiliary/select_generate_databases_model.sh"
+
+if [[ ! -f "${MODEL_SETUP_HELPER}" ]]; then
+  echo "Error: model-selection helper is missing: ${MODEL_SETUP_HELPER}" >&2
+  exit 1
 fi
-[[ -x "${DATABASE_BIN}" ]] || { echo "Error: database generator not executable: ${DATABASE_BIN}" >&2; exit 1; }
+
+# shellcheck source=auxiliary/select_generate_databases_model.sh
+source "${MODEL_SETUP_HELPER}"
+select_generate_databases_model "${ROOT_DIR}" "${SPECFEM_ROOT}" "${DSM1D_OR_3D}"
+DATABASE_BIN="${GENERATOR}"
+
+for source_file in "${CASE_MODEL}" "${CASE_GET_MODEL}"; do
+  if [[ ! -f "${source_file}" ]]; then
+    echo "Error: required case model source is missing: ${source_file}" >&2
+    echo "Check the selected case model sources for ${DSM1D_OR_3D}." >&2
+    exit 1
+  fi
+done
+
+if ! cmp -s "${CASE_MODEL}" "${ACTIVE_MODEL}" || \
+   ! cmp -s "${CASE_GET_MODEL}" "${ACTIVE_GET_MODEL}"; then
+  echo "Error: active SPECFEM3D model sources do not match this case." >&2
+  echo "Run './step0_prepare_660km_heterogeneity.sh --install' before Step 3." >&2
+  exit 1
+fi
+
+if [[ ! -x "${DATABASE_BIN}" || "${ACTIVE_MODEL}" -nt "${DATABASE_BIN}" || \
+      "${ACTIVE_GET_MODEL}" -nt "${DATABASE_BIN}" ]]; then
+  echo "Error: xgenerate_databases is missing or older than the active model sources." >&2
+  echo "Run './step0_prepare_660km_heterogeneity.sh --install' before Step 3." >&2
+  exit 1
+fi
 
 echo "Detected NPROC=${NPROC}"
 echo "DSM1D_OR_3D=${DSM1D_OR_3D}"

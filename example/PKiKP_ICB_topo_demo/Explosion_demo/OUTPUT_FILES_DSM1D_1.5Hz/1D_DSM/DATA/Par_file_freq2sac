@@ -1,6 +1,6 @@
 41 # Number of stations (ndep * ndist)
-4096 # Number of frequencies
-2000 # Total time length in seconds
+8192 # Number of frequencies
+4001 # Total time length in seconds
 600.0000 0.0 0.0 # Source depth (km), source latitude, source longitude
 3 # Number of components
 0.6d-3 # Imaginary part of omega

@@ -86,16 +86,40 @@ case "${DSM1D_OR_3D}" in
     ;;
 esac
 
-DATABASE_BIN="${BIN_DIR}/xgenerate_databases_ICBtopo_IChetero"
-if [[ "${DSM1D_OR_3D}" == "DSM1D" ]]; then
-  DATABASE_BIN="${BIN_DIR}/xgenerate_databases_DSM1D"
-fi
-if [[ "$(basename "${DATABASE_BIN}")" == "xgenerate_databases_ULVZ" ]]; then
-  echo "Error: this demo must not use xgenerate_databases_ULVZ." >&2
-  echo "Use xgenerate_databases_ICBtopo_IChetero for DSM3D or xgenerate_databases_DSM1D for DSM1D." >&2
+SPECFEM_ROOT="$(cd "${BIN_DIR}/.." && pwd)"
+MODEL_SETUP_HELPER="${ROOT_DIR}/auxiliary/select_generate_databases_model.sh"
+
+if [[ ! -f "${MODEL_SETUP_HELPER}" ]]; then
+  echo "Error: model-selection helper is missing: ${MODEL_SETUP_HELPER}" >&2
   exit 1
 fi
-[[ -x "${DATABASE_BIN}" ]] || { echo "Error: database generator not executable: ${DATABASE_BIN}" >&2; exit 1; }
+
+# shellcheck source=auxiliary/select_generate_databases_model.sh
+source "${MODEL_SETUP_HELPER}"
+select_generate_databases_model "${ROOT_DIR}" "${SPECFEM_ROOT}" "${DSM1D_OR_3D}"
+DATABASE_BIN="${GENERATOR}"
+
+for source_file in "${CASE_MODEL}" "${CASE_GET_MODEL}"; do
+  if [[ ! -f "${source_file}" ]]; then
+    echo "Error: required case model source is missing: ${source_file}" >&2
+    echo "Check the case-local DATA model sources." >&2
+    exit 1
+  fi
+done
+
+if ! cmp -s "${CASE_MODEL}" "${ACTIVE_MODEL}" || \
+   ! cmp -s "${CASE_GET_MODEL}" "${ACTIVE_GET_MODEL}"; then
+  echo "Error: active SPECFEM3D model sources do not match this case." >&2
+  echo "Run './step0_prepare_inner_core_heterogeneity.sh --install' before Step 3." >&2
+  exit 1
+fi
+
+if [[ ! -x "${DATABASE_BIN}" || "${ACTIVE_MODEL}" -nt "${DATABASE_BIN}" || \
+      "${ACTIVE_GET_MODEL}" -nt "${DATABASE_BIN}" ]]; then
+  echo "Error: xgenerate_databases is missing or older than the active model sources." >&2
+  echo "Run './step0_prepare_inner_core_heterogeneity.sh --install' before Step 3." >&2
+  exit 1
+fi
 
 echo "Detected NPROC=${NPROC}"
 echo "DSM1D_OR_3D=${DSM1D_OR_3D}"

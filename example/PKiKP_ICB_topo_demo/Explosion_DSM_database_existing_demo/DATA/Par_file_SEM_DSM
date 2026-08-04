@@ -153,8 +153,10 @@ ANGULAR_WIDTH_ETA_IN_DEGREES = 4.0
 # NZ_TOP =
 # ICB_AUX_ELEMENTS_FROM_COUPLING = 1
 ICB_TOPOGRAPHY_FILE = DATA/topo_files/latlon_ICB_topo.txt
+# Extra baseline-valued coverage used only by Step 1 during cubed-sphere conversion.
+# The source topography generator and its output values inside the SEM box are unchanged.
+ICB_TOPOGRAPHY_LATLON_MARGIN_DEGREES = 2.0
 # ICB_TOPOGRAPHY_TRUNCATION_MARGIN_M = 40000.0
-# SPECFEM3D_DATABASE_BIN =
 
 # -----------------------------------------------------------------------------
 # Mesh style
@@ -281,7 +283,7 @@ TIME_BUFFER_CUT=50.0
 # extract_Injectedwaves partitions work by depth-table index.
 INJECTED_WAVES_NPROC = 256
 INJECTED_WAVES_TIME_LIMIT = 02:00:00
-INJECTED_WAVES_MEM_PER_CPU = 10G
+INJECTED_WAVES_MEM_PER_CPU = 12G
 NPT_ONE_PACKAGE = 600
 INJECTED_WAVES_FILTERING = 0
 INJECTED_WAVES_FREQ_LOW = 0.005
