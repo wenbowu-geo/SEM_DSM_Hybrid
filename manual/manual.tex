@@ -659,6 +659,17 @@ ready. Step 7 requires both source-to-box DSM output and SEM databases. Step 8
 requires the injected wavefield. Step 9 requires the SEM solver output and
 box-to-receiver DSM output.
 
+\paragraph{Frequency range and post-processing.}
+To keep the computational cost of the examples manageable, the current demo
+cases are configured for relatively low frequencies. The final 3-D synthetics
+may need to be band-pass filtered in a frequency range appropriate for the
+case before the 3-D effects are clearly visible. For example, the raw 3-D
+synthetics from the PcP heterogeneity case can contain substantial
+high-frequency noise; a 0.2--0.4~Hz band-pass is a useful starting point for
+displaying its 3-D signal. Adjust the band for the model and phase being
+studied, and apply the same filter to the paired 1-D and 3-D synthetics when
+comparing them.
+
 \section{PKIKP with inner-core rotation}
 \label{sec:pkikp_rotation}
 
