@@ -62,7 +62,7 @@ SINGLE_FORCE_ENZ = -1
 
 # Upper limit on MPI ranks. The script chooses NPROC_XI and NPROC_ETA so that
 # NPROC_XI * NPROC_ETA does not exceed this value, unless they are set explicitly.
-NPROC = 256
+NPROC =  512
 
 # Save mesh files for visualization and checking.
 SAVE_MESH_FILES = .false.

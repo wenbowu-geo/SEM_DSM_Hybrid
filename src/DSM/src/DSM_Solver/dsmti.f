@@ -12,7 +12,8 @@ c constant
 	parameter ( maxlmax = 40000 )
 c WENBO
         parameter (max_ndep = 1500 )
-        parameter (max_ntheta=2400)
+c        parameter (max_ntheta=2400)
+        parameter (max_ntheta=6000)
 	parameter ( max_nstation = max_ndep*max_ntheta )
 c WENBO --- nl_check_amp need to be tested. 
 c       --- Initial tests shows that nl_check_amp>400 works well
