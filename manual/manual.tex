@@ -179,9 +179,8 @@ for the example submission scripts. The standalone component Makefiles use
 commands such as \code{gfortran}, \code{gcc}, \code{mpif77}, \code{mpif90},
 and \code{mpicc}. For SPECFEM3D, select the serial Fortran, MPI Fortran, and C
 compilers with the \code{FC}, \code{MPIFC}, and \code{CC} arguments to
-\code{configure}. The integrated topography converter inherits this configured
-toolchain. Edit compiler variables directly only for components that do not use
-\code{configure}.
+\code{configure}. Edit compiler variables directly only for components that do
+not use \code{configure}.
 
 \section{Build order}
 
@@ -210,32 +209,9 @@ cd ../../SPECFEM3D
 make
 \end{lstlisting}
 
-The default SPECFEM3D target builds \code{xdecompose_mesh},
-\code{xcubedsphere_topo}, \code{xmeshfem3D},
-\code{xgenerate_databases}, and \code{xspecfem3D}. An MPI-enabled
-configuration also builds \code{xdecompose_mesh_mpi}. Step~0 later installs
-the selected case's model sources and rebuilds the canonical
-\code{xgenerate_databases}. The converter is therefore available to
-topographic cases without a separate demo-specific compilation step.
-
-The converter is built locally with the compiler selected by
-\code{configure}; do not reuse a precompiled converter from a different Linux
-system. Its program entry point is
-\code{src/SPECFEM3D/src/cubedsphere_topo/program_cubedsphere_topo.f90}; the
-implementation is split across
-\code{src/SPECFEM3D/src/cubedsphere_topo/cubedsphere_topo.f90} and companion
-Fortran sources.
-There is intentionally no single source file named
-\code{xcubedsphere_topo.f90}. The Makefile in that source directory is a
-compatibility wrapper around the top-level SPECFEM3D build.
-
-Ordinary SPECFEM3D \code{make clean} removes the converter with the other
-default targets. To force only the converter to be rebuilt after changing
-compilers or system libraries, run from \code{src/SPECFEM3D}:
-\begin{lstlisting}
-make CLEAN=cubedsphere_topo clean
-make xcubedsphere_topo
-\end{lstlisting}
+The \code{xcubedsphere_topo} program converts geographic interface topography
+to the cubed-sphere grid used by topographic SEM meshes. It is compiled with
+the other default SPECFEM3D executables when \code{make} is run.
 
 Then change into the selected example directory and run its Step~0 script:
 \begin{lstlisting}
@@ -270,8 +246,6 @@ SAC files for 1-D synthetics. \\
 \code{extract_Injectedwaves} & Interpolates DSM source-to-box Green's functions
 onto SEM boundary points, applies the selected time cut, and writes injected
 wavefield files. \\
-\code{xcubedsphere_topo} & Converts geographic interface topography to the
-cubed-sphere grid used by topographic SEM meshes. \\
 \code{xmeshfem3D} & Builds the cubed-sphere local SEM mesh. \\
 \code{xgenerate_databases} & Generates the SEM databases and applies the
 1-D or 3-D model installed by Step~0 for the selected case. \\
@@ -292,7 +266,6 @@ test -x src/DSM/src/DSM_Solver/dsmti
 test -x src/DSM/src/DSM_FreqToTimeSac/spectotime
 test -x src/InjectedWaves/src/extract_Injectedwaves
 test -x src/Coupling/src/coupling_integral
-test -x src/SPECFEM3D/bin/xcubedsphere_topo
 test -x src/SPECFEM3D/bin/xmeshfem3D
 test -x src/SPECFEM3D/bin/xgenerate_databases
 test -x src/SPECFEM3D/bin/xspecfem3D
@@ -536,9 +509,7 @@ the SEM case. \code{step2} reports whether the case is using \code{DSM1D} or
 then writes and submits the Slurm jobs for \code{xmeshfem3D} and the canonical
 \code{xgenerate_databases}.
 
-For interface-topography cases, the applicable \code{DSM3D} path in Step~1
-invokes \code{xcubedsphere_topo}; flat or \code{DSM1D} modes skip that
-conversion. In cases that generate injected waves locally, Step~1 only records
+In cases that generate injected waves locally, Step~1 only records
 the future \code{INJECTED_WAVEFIELD_PATH} in the SPECFEM3D parameter file;
 Step~7 later creates \code{WORK/InjectedWaves}. Cases configured specifically
 to reuse an existing injected-wave product require that product to exist and
@@ -802,9 +773,7 @@ The PKiKP example uses an ICB topography file such as:
 DATA/topo_files/latlon_ICB_topo.txt
 \end{lstlisting}
 The parameter \code{ICB_TOPOGRAPHY_FILE} points to this file. During database
-preparation, the topography is converted to the cubed-sphere interface format
-with \code{xcubedsphere_topo}. Build it from the repository root with
-\code{make -C src/SPECFEM3D xcubedsphere_topo}.
+preparation, the topography is converted to the cubed-sphere interface format.
 
 After setting \code{DSM1D_OR_3D}, run
 \code{./step0_prepare_model.sh --install}. In addition to installing the two
@@ -887,10 +856,6 @@ relative path in the case scripts. \\
 or set \code{EXTRACT_INJECTEDWAVES_BIN}. \\
 \code{coupling_integral} not found & Build \code{src/Coupling/src} or set
 \code{COUPLING_INTEGRAL_BIN}. \\
-\code{xcubedsphere_topo} is missing or reports a GLIBC version error &
-Configure SPECFEM3D for the local toolchain, then run
-\code{make -C src/SPECFEM3D CLEAN=cubedsphere_topo clean} followed by
-\code{make -C src/SPECFEM3D xcubedsphere_topo}. \\
 Injected-wave step stops because SEM depth tables are missing & Wait for
 \code{xmeshfem3D} and \code{xgenerate_databases} to finish successfully. \\
 \code{xgenerate_databases} is missing, stale, or built for another case & Run
