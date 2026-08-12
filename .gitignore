@@ -27,3 +27,9 @@ example/**/DATA/heterogeneities/Puding_model.png
 # Local configure logs contain machine-specific paths and host information
 src/SPECFEM3D/config.log
 src/SPECFEM3D/config.status
+
+# Locally compiled cubed-sphere topography converter
+src/SPECFEM3D/bin/xcubedsphere_topo
+src/SPECFEM3D/obj/*.cubed.o
+src/SPECFEM3D/obj/cubedsphere_topo/
+src/SPECFEM3D/lib/libcubedspheretopo.a

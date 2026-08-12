@@ -94,9 +94,9 @@ resolve_case_path() {
     return 1
   fi
   if [[ "${path}" = /* ]]; then
-    printf '%s\n' "$(cd "$(dirname "${path}")" && pwd)/$(basename "${path}")"
+    printf '%s\n' "${path}"
   else
-    printf '%s\n' "$(cd "${ROOT_DIR}/$(dirname "${path}")" && pwd)/$(basename "${path}")"
+    printf '%s\n' "${ROOT_DIR}/${path}"
   fi
 }
 

@@ -79,7 +79,7 @@ SAVE_MESH_FILES = .false.
 # can set SPECFEM3D_SOLVER_DT directly for full control, adjust this cap, or
 # leave SPECFEM3D_SOLVER_MAX_DT unset to use only the mesher-derived value.
 SPECFEM3D_SOLVER_DT =
-SPECFEM3D_SOLVER_DT_SAFETY_FACTOR = 0.15
+SPECFEM3D_SOLVER_DT_SAFETY_FACTOR = 0.6
 SPECFEM3D_SOLVER_MAX_DT = 0.4
 
 # SPECFEM3D number of time steps.

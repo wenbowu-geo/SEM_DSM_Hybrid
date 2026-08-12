@@ -64,7 +64,7 @@ resolve_case_path() {
   if [[ "${path}" = /* ]]; then
     printf '%s\n' "${path}"
   else
-    printf '%s\n' "$(cd "${ROOT_DIR}/$(dirname "${path}")" && pwd)/$(basename "${path}")"
+    printf '%s\n' "${ROOT_DIR}/${path}"
   fi
 }
 
@@ -156,7 +156,7 @@ convert_interface_topography() {
   margin=$(to_float "$(param CMB_TOPOGRAPHY_TRUNCATION_MARGIN_M 40000.0)")
   if [[ ! -x "${BIN_DIR}/xcubedsphere_topo" ]]; then
     echo "Error: ${BIN_DIR}/xcubedsphere_topo is required to convert ${src} to ${dst}." >&2
-    echo "Build SPECFEM3D src/cubedsphere_topo or copy the converter into ${BIN_DIR}." >&2
+    echo "Build it with: make -C \"${BIN_DIR}/..\" xcubedsphere_topo" >&2
     exit 1
   fi
   mkdir -p "${WORK_DIR}/OUTPUT_FILES"

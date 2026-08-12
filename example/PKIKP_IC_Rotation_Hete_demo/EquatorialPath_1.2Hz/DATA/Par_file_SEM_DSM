@@ -79,7 +79,7 @@ SAVE_MESH_FILES = .false.
 # can set SPECFEM3D_SOLVER_DT directly for full control, adjust this cap, or
 # leave SPECFEM3D_SOLVER_MAX_DT unset to use only the mesher-derived value.
 SPECFEM3D_SOLVER_DT =
-SPECFEM3D_SOLVER_DT_SAFETY_FACTOR = 0.15
+SPECFEM3D_SOLVER_DT_SAFETY_FACTOR = 0.7
 SPECFEM3D_SOLVER_MAX_DT = 0.4
 
 # SPECFEM3D number of time steps.
@@ -98,7 +98,7 @@ SPECFEM3D_SOLVER_NSTEP =
 SPECFEM3D_SOLVER_ADDITIONAL_TIME_BUFFER = 40.0
 
 # Slurm controls for step8_specfem_solver.sh.
-SPECFEM3D_SOLVER_TIME_LIMIT = 10:00:00
+SPECFEM3D_SOLVER_TIME_LIMIT = 30:00:00
 SPECFEM3D_SOLVER_MEM_PER_CPU = 6G
 
 # -----------------------------------------------------------------------------
@@ -267,9 +267,9 @@ TIME_BUFFER_CUT=50.0
 # INJECTED_WAVES_NPROC is an upper request. Step 7 automatically caps it
 # by the larger SEM elastic/acoustic depth-table count, because
 # extract_Injectedwaves partitions work by depth-table index.
-INJECTED_WAVES_NPROC = 128
-INJECTED_WAVES_TIME_LIMIT = 02:00:00
-INJECTED_WAVES_MEM_PER_CPU = 10G
+INJECTED_WAVES_NPROC = 201
+INJECTED_WAVES_TIME_LIMIT = 07:00:00
+INJECTED_WAVES_MEM_PER_CPU = 21G
 NPT_ONE_PACKAGE = 600
 INJECTED_WAVES_FILTERING = 0
 INJECTED_WAVES_FREQ_LOW = 0.005

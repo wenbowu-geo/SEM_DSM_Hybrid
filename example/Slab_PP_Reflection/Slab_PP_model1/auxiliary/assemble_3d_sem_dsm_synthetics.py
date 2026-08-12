@@ -236,18 +236,35 @@ def interpolate(trace: array, delta: float, start: float, time: float) -> float:
     return float(trace[i]) * (1.0 - frac) + float(trace[i + 1]) * frac
 
 
+def trim_trace_before(trace: array, delta: float, start: float, cutoff: float) -> tuple[array, float]:
+    """Discard samples before cutoff and return the grid-aligned new begin time."""
+    if delta <= 0.0:
+        raise RuntimeError(f"invalid SAC sample interval: {delta}")
+    first = 0
+    while first < len(trace) and start + first * delta < cutoff:
+        first += 1
+    if first == len(trace):
+        raise RuntimeError(f"cutoff {cutoff} s leaves no SAC samples")
+    return trace[first:], start + first * delta
+
+
 def scatter_on_1d_grid(
     header_1d: bytearray,
     trace_scatter: array,
     scatter_delta: float,
     scatter_start: float,
+    scatter_time_shift: float,
 ) -> array:
     npts = sac_int(header_1d, 9)
     delta_1d = sac_float(header_1d, 0)
     begin_1d = sac_float(header_1d, 5)
     out = array("f", [0.0]) * npts
     for i in range(npts):
-        out[i] = interpolate(trace_scatter, scatter_delta, scatter_start, begin_1d + i * delta_1d)
+        target_time = begin_1d + i * delta_1d
+        source_time = target_time - scatter_time_shift
+        if source_time < 0.0:
+            continue
+        out[i] = interpolate(trace_scatter, scatter_delta, scatter_start, source_time)
     return out
 
 
@@ -286,7 +303,10 @@ def station_1d_files(one_d_dir: Path, station_name: str) -> dict[str, Path]:
 
 def shifted_scatter_copy(src: Path, dst: Path, scatter_time_shift: float) -> None:
     header, trace = read_sac(src)
-    refresh_sac_header(header, trace, sac_float(header, 5) + scatter_time_shift)
+    delta = sac_float(header, 0)
+    begin = sac_float(header, 5)
+    trace, begin = trim_trace_before(trace, delta, begin, 0.0)
+    refresh_sac_header(header, trace, begin + scatter_time_shift)
     write_sac(dst, header, trace)
 
 
@@ -372,10 +392,17 @@ def main() -> None:
             delta = sac_float(header_s, 0)
             if delta_scatter is None:
                 delta_scatter = delta
-            scatter_start = sac_float(header_s, 5) + scatter_time_shift
-            scatter_grid[comp] = scatter_on_1d_grid(header_z, trace_s, delta, scatter_start)
+            scatter_start = sac_float(header_s, 5)
+            scatter_grid[comp] = scatter_on_1d_grid(
+                header_z,
+                trace_s,
+                delta,
+                scatter_start,
+                scatter_time_shift,
+            )
+            trace_s, scatter_start = trim_trace_before(trace_s, delta, scatter_start, 0.0)
             shifted_header = header_s.copy()
-            refresh_sac_header(shifted_header, trace_s, scatter_start)
+            refresh_sac_header(shifted_header, trace_s, scatter_start + scatter_time_shift)
             patch_sac_metadata(shifted_header, cmt, station, ext)
             write_sac(out_scatter / f"{name}.{ext}", shifted_header, trace_s)
 
@@ -394,7 +421,13 @@ def main() -> None:
         }
         begin = sac_float(header_z, 5)
         for ext, (header, trace) in outputs.items():
-            refresh_sac_header(header, trace, begin)
+            trace, trimmed_begin = trim_trace_before(
+                trace,
+                sac_float(header, 0),
+                begin,
+                scatter_time_shift,
+            )
+            refresh_sac_header(header, trace, trimmed_begin)
             patch_sac_metadata(header, cmt, station, ext)
             write_sac(out_3d / f"{name}.{ext}", header, trace)
             nout += 1
@@ -405,7 +438,7 @@ def main() -> None:
     print(f"Copied 1-D DSM SAC files to {out_1d}")
     print(f"Wrote time-shifted scattering SAC files to {out_scatter}")
     print(f"Wrote {nout} final 3-D SEM-DSM SAC files to {out_3d}")
-    print(f"Scattering SAC times shifted by {scatter_shift_source}: {scatter_time_shift:.9f} s")
+    print(f"Coupled SAC outputs trimmed at {scatter_shift_source}: {scatter_time_shift:.9f} s")
 
 
 if __name__ == "__main__":

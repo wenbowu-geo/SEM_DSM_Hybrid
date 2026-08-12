@@ -233,6 +233,7 @@ SUBDIRS = \
 	auxiliaries \
 	check_mesh_quality \
 	cuda \
+	cubedsphere_topo \
 	decompose_mesh \
 	generate_databases \
 	meshfem3D \
@@ -245,6 +246,7 @@ SUBDIRS = \
 # default targets for the pure Fortran version
 DEFAULT = \
 	xdecompose_mesh \
+	xcubedsphere_topo \
 	xmeshfem3D \
 	xgenerate_databases \
 	xspecfem3D \
@@ -301,12 +303,14 @@ help:
 	@echo ""
 	@echo "supported main executables:"
 	@echo "    xdecompose_mesh"
+	@echo "    xcubedsphere_topo"
 	@echo "    xmeshfem3D"
 	@echo "    xgenerate_databases"
 	@echo "    xspecfem3D"
 	@echo ""
 	@echo "defaults:"
 	@echo "    xdecompose_mesh"
+	@echo "    xcubedsphere_topo"
 	@echo "    xmeshfem3D"
 	@echo "    xgenerate_databases"
 	@echo "    xspecfem3D"

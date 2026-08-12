@@ -63,10 +63,15 @@ make
 
 cd ../../SPECFEM3D
 ./configure FC=mpif90 CC=mpicc
+make xcubedsphere_topo
 make xmeshfem3D
 make xgenerate_databases
 make xspecfem3D
 ```
+
+The topography converter is also included in the default SPECFEM3D `make`
+target. Build it locally with the configured compiler; the repository does not
+rely on a precompiled `xcubedsphere_topo` executable.
 
 Some examples require a model-specific SPECFEM3D database generator, such as
 `xgenerate_databases_DSM1D`, `xgenerate_databases_ICB_Topo`,

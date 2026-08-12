@@ -82,9 +82,9 @@ resolve_case_path() {
     return 1
   fi
   if [[ "${path}" = /* ]]; then
-    printf '%s\n' "$(cd "$(dirname "${path}")" && pwd)/$(basename "${path}")"
+    printf '%s\n' "${path}"
   else
-    printf '%s\n' "$(cd "${ROOT_DIR}/$(dirname "${path}")" && pwd)/$(basename "${path}")"
+    printf '%s\n' "${ROOT_DIR}/${path}"
   fi
 }
 
@@ -93,8 +93,8 @@ infer_reference_data_dir() {
   injected_path=$(param INJECTED_WAVEFIELD_PATH "")
   [[ -n "${injected_path}" ]] || return 1
   injected_path=$(resolve_case_path "${injected_path}")
-  injected_dir=$(cd "$(dirname "${injected_path}")" && pwd)
-  work_dir=$(cd "${injected_dir}/.." && pwd)
+  injected_dir=$(dirname "${injected_path}")
+  work_dir=$(dirname "${injected_dir}")
   printf '%s\n' "${work_dir}/SPECFEM3D/DATA"
 }
 
@@ -103,7 +103,7 @@ infer_reference_manifest() {
   injected_path=$(param INJECTED_WAVEFIELD_PATH "")
   [[ -n "${injected_path}" ]] || return 1
   injected_path=$(resolve_case_path "${injected_path}")
-  injected_dir=$(cd "$(dirname "${injected_path}")" && pwd)
+  injected_dir=$(dirname "${injected_path}")
   printf '%s\n' "${injected_dir}/DATA/sem_box_manifest.sha256"
 }
 

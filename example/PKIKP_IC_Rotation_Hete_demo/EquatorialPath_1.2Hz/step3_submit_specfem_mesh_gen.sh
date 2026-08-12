@@ -7,7 +7,7 @@ set -euo pipefail
 
 # --- 1. User Configuration ---
 # SLURM Job Parameters
-TIME_LIMIT="01:00:00"
+TIME_LIMIT="02:00:00"
 MEM_PER_CPU="4G"
 
 # Modules to load (leave empty if none required)

@@ -42,7 +42,7 @@ ATTENUATION_TARGET_DEPTHS = .False.
 # DSM1D also helps evaluate SEM-DSM error:
 # the scattering wavefield should be zero for the 1-D background model.
 # DSM3D uses the 3-D DSM model and converts ICB topography with xcubedsphere_topo.
-DSM1D_OR_3D = DSM3D
+DSM1D_OR_3D = DSM1D
 
 # 1 = forward, 2 = adjoint, 3 = forward and adjoint.
 SIMULATION_TYPE = 1
@@ -79,7 +79,7 @@ SAVE_MESH_FILES = .false.
 # can set SPECFEM3D_SOLVER_DT directly for full control, adjust this cap, or
 # leave SPECFEM3D_SOLVER_MAX_DT unset to use only the mesher-derived value.
 SPECFEM3D_SOLVER_DT =
-SPECFEM3D_SOLVER_DT_SAFETY_FACTOR = 0.15
+SPECFEM3D_SOLVER_DT_SAFETY_FACTOR = 0.6
 SPECFEM3D_SOLVER_MAX_DT = 0.4
 
 # SPECFEM3D number of time steps.
