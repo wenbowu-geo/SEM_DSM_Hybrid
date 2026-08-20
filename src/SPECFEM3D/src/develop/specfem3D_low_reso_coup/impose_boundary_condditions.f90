@@ -639,7 +639,7 @@ idepth_read=idepth_used_ela(idepth_count)
 iDist_min_thisset=minval(iDepDist_elastic(2,:))
 iDist_max_thisset=maxval(iDepDist_elastic(2,:))
 
-write(file_name,"('/stress/depth',i3.3'_package',i3.3)") idepth_read,ipackage_read
+write(file_name,"('/stress/depth',i5.5'_package',i5.5)") idepth_read,ipackage_read
 source_name=sources_selected(icomp_source)
 Green_stress_file=INJECTED_WAVEFIELD_PATH(1:len_trim(INJECTED_WAVEFIELD_PATH)) // '/' &
     //trim(source_name(1:len_trim(source_name)))// '/' //trim(file_name(1:len_trim(file_name)))
@@ -710,7 +710,7 @@ iDist_min_thisset=minval(iDepDist_elastic(2,:))
 iDist_max_thisset=maxval(iDepDist_elastic(2,:))
 
 
-write(file_name,"('/velo_solid/depth',i3.3'_package',i3.3)") idepth_read,ipackage_read
+write(file_name,"('/velo_solid/depth',i5.5'_package',i5.5)") idepth_read,ipackage_read
 source_name=sources_selected(icomp_source)
 Green_velo_file=INJECTED_WAVEFIELD_PATH(1:len_trim(INJECTED_WAVEFIELD_PATH)) // '/' &
     //trim(source_name(1:len_trim(source_name)))// '/' //trim(file_name(1:len_trim(file_name)))
@@ -791,7 +791,7 @@ idepth_read=idepth_used_acou(idepth_count)
 iDist_min_thisset=minval(iDepDist_acoustic(2,:))
 iDist_max_thisset=maxval(iDepDist_acoustic(2,:))
 
-write(file_name,"('/pressure/depth',i3.3'_package',i3.3)") idepth_read,ipackage_read
+write(file_name,"('/pressure/depth',i5.5'_package',i5.5)") idepth_read,ipackage_read
 source_name=sources_selected(icomp_source)
 Green_pressure_file=INJECTED_WAVEFIELD_PATH(1:len_trim(INJECTED_WAVEFIELD_PATH)) // '/' &
     //trim(source_name(1:len_trim(source_name)))// '/' //trim(file_name(1:len_trim(file_name)))
@@ -847,7 +847,7 @@ idepth_read=idepth_used_acou(idepth_count)
 iDist_min_thisset=minval(iDepDist_acoustic(2,:))
 iDist_max_thisset=maxval(iDepDist_acoustic(2,:))
 
-write(file_name,"('/disp_fluid/depth',i3.3'_package',i3.3)") idepth_read,ipackage_read
+write(file_name,"('/disp_fluid/depth',i5.5'_package',i5.5)") idepth_read,ipackage_read
 source_name=sources_selected(icomp_source)
 Green_disp_file=INJECTED_WAVEFIELD_PATH(1:len_trim(INJECTED_WAVEFIELD_PATH)) // '/' &
     //trim(source_name(1:len_trim(source_name)))// '/' //trim(file_name(1:len_trim(file_name)))
@@ -923,7 +923,7 @@ idepth_read=idepth_used_acou(idepth_count)
 iDist_min_thisset=minval(iDepDist_acoustic(2,:))
 iDist_max_thisset=maxval(iDepDist_acoustic(2,:))
 
-write(file_name,"('/chi_dot/depth',i3.3'_package',i3.3)") idepth_read,ipackage_read
+write(file_name,"('/chi_dot/depth',i5.5'_package',i5.5)") idepth_read,ipackage_read
 source_name=sources_selected(icomp_source)
 Green_pdot_file=INJECTED_WAVEFIELD_PATH(1:len_trim(INJECTED_WAVEFIELD_PATH)) // '/' &
     //trim(source_name(1:len_trim(source_name)))// '/' //trim(file_name(1:len_trim(file_name)))

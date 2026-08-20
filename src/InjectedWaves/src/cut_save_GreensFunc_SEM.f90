@@ -132,7 +132,7 @@ integer ::ipackage,icomp,it_start,it_end,idist,ios
 integer ::it
 
 do ipackage=1,npackage_save
-   write(idepth_ipackage_file,"('depth'i3.3,'_package',i3.3)")idepth,ipackage
+   write(idepth_ipackage_file,"('depth'i5.5,'_package',i5.5)")idepth,ipackage
    it_start=(ipackage-1)*(npt_eachpack-1)+1+ipt_begin_save
    it_end=it_start+npt_eachpack-1
 
