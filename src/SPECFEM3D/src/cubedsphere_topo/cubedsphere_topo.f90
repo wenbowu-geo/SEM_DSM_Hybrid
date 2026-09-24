@@ -298,7 +298,8 @@
      call read_interface_parameters(IIN,SUPPRESS_UTM_PROJECTION,interface_file(i_interface), &
           nx_interface(i_interface),ny_interface(i_interface),orig_x_interface(i_interface),orig_y_interface(i_interface),&
           spacing_x_interface(i_interface),spacing_y_interface(i_interface))
-     write(IMAIN,*) 'the ',i_interface,'interface: nx_interface=',nx_interface(i_interface),'ny_interface=',ny_interface(i_interface)
+     write(IMAIN,*) 'the ',i_interface,'interface: nx_interface=',nx_interface(i_interface), &
+          'ny_interface=',ny_interface(i_interface)
 
      if((nx_interface(i_interface) < 2) .or.(ny_interface(i_interface) < 2)) stop 'not enough interface points (minimum is 2x2)'
   enddo
