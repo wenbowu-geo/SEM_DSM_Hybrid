@@ -12,8 +12,8 @@ PAR_FILE="${WORK_DIR}/DATA/Par_file"
 OUTPUT_DIR="${WORK_DIR}/OUTPUT_FILES"
 BIN_DIR="$(cd "${ROOT_DIR}/../../../src/SPECFEM3D/bin" && pwd)"
 
-MODULES=""
-MPIRUN_CMD="mpirun"
+MODULES="gnu14/14.2.0 openmpi5/5.0.7"
+MPIRUN_CMD="mpirun --bind-to none"
 
 echo "----------------------------------------------------------------------"
 echo "Starting Step 8: SPECFEM3D Coupled Solver"
@@ -512,6 +512,9 @@ print_job_runtime() {
 }
 trap print_job_runtime EXIT
 
+source /etc/profile.d/lmod.sh
+module purge
+export SLURM_EXPORT_ENV=ALL
 $( [[ -n "${MODULES}" ]] && echo "module load ${MODULES}" || echo "# No modules to load" )
 set -e
 ${MPIRUN_CMD} "${BIN_DIR}/xspecfem3D"

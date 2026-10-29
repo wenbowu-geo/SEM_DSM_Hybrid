@@ -55,6 +55,23 @@ def read_injected_metadata(path: Path) -> dict[str, float]:
     return values
 
 
+def actual_injection_start(green: dict[str, float]) -> float:
+    """Use corrected metadata; explicitly marked legacy metadata needs one DT."""
+    if "first_sample_time_Green" in green:
+        value = green["first_sample_time_Green"]
+    else:
+        dt = green["dt_Green"]
+        if not math.isfinite(dt) or dt <= 0:
+            raise RuntimeError("invalid injection sampling interval")
+        value = green["t_begin_Green"]
+        if green.get("injection_time_origin_version", 2) == 1:
+            # Legacy metadata labels the first saved sample one DT early.
+            value += dt
+    if not math.isfinite(value):
+        raise RuntimeError("invalid injection start time")
+    return value
+
+
 def read_stations(path: Path) -> list[dict[str, float | str]]:
     stations: list[dict[str, float | str]] = []
     for line in path.read_text().splitlines():
@@ -263,6 +280,7 @@ def main() -> None:
     parser.add_argument("--one-d-dsm-model")
     parser.add_argument("--coupling-dir", default="WORK/Coupling/OUTPUT_FILES")
     parser.add_argument("--metadata")
+    parser.add_argument("--green-metadata", default="WORK/InjectedWaves/OUTPUT_FILES/InjectedWaves_Par_file")
     parser.add_argument("--stations", default="DATA/tele_station.txt")
     parser.add_argument("--cmt", default="DATA/CMTSOLUTION")
     parser.add_argument("--output-root", default="OUTPUT_FILES")
@@ -304,7 +322,8 @@ def main() -> None:
     out_3d = output_root / "3D_SEM_DSM"
 
     metadata = read_injected_metadata(metadata_path)
-    scatter_time_shift = metadata["TIME_START_CUT"]
+    green = read_injected_metadata((root / args.green_metadata).resolve())
+    scatter_time_shift = actual_injection_start(green)
     cmt = read_cmtsolution((root / args.cmt).resolve())
     stations = read_stations((root / args.stations).resolve())
 
@@ -393,7 +412,7 @@ def main() -> None:
     print(f"Copied scaled 1-D DSM SAC files to {out_1d}")
     print(f"Wrote time-shifted scattering SAC files to {out_scatter}")
     print(f"Wrote {nout} final 3-D SEM-DSM SAC files to {out_3d}")
-    print(f"Coupled SAC outputs trimmed at TIME_START_CUT={scatter_time_shift:.6f} s")
+    print(f"Coupled SAC outputs trimmed at actual injection start={scatter_time_shift:.6f} s")
 
 
 if __name__ == "__main__":

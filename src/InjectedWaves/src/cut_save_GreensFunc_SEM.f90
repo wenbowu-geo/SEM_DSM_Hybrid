@@ -24,7 +24,7 @@ npt_save_estimate=int((tend_save-tbegin_save)/dt_DSM_refined)
 npackage_save=int(npt_save_estimate/(npt_eachpack-1))+1
 ! Number of data points to cut
 npt_save=npackage_save*npt_eachpack
-final_tbegin_save=(ipt_begin_save-1)*dt_DSM_refined
+final_tbegin_save=ipt_begin_save*dt_DSM_refined
 final_tend_save=final_tbegin_save+(npt_save-1)*dt_DSM_refined
 
 

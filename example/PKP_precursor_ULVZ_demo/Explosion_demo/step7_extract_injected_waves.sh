@@ -9,8 +9,8 @@ set -euo pipefail
 # --- 1. User Configuration ---
 TIME_LIMIT="02:00:00"
 MEM_PER_CPU="8G"
-MODULES=""
-MPIRUN_CMD="mpirun"
+MODULES="gnu14/14.2.0 openmpi5/5.0.7"
+MPIRUN_CMD="mpirun --bind-to none"
 
 # --- 2. Path Setup ---
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -184,6 +184,12 @@ for this_source in "${SOURCES[@]}"; do
         exit 1
     fi
 done
+
+if [[ "${SINGLE_FORCE_MODE}" == "0" || "${SINGLE_FORCE_MODE}" == "-1" ]]; then
+    # Refresh this case's 1-D source combination using reusable DSM traces.
+    (cd "${ROOT_DIR}" && "${PYTHON_BIN:-python3}" auxiliary/synthesize_cmtsolution_sac.py \
+        --sem-par-file DATA/Par_file_SEM_DSM --if-needed --clean)
+fi
 
 mkdir -p "${DATA_DIR}" "${OUTPUT_DIR}"
 

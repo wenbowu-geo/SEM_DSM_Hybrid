@@ -1,0 +1,22 @@
+At line 210 of file src/generate_databases/generate_databases.f90 (unit = 42)
+Fortran runtime error: Cannot open file './OUTPUT_FILES//output_mesher.txt': No such file or directory
+
+Error termination. Backtrace:
+#0  0x14d201647cda in ???
+#1  0x14d2016487d9 in ???
+#2  0x14d20164933f in ???
+#3  0x14d2018bcb58 in ???
+#4  0x14d2018bce3b in ???
+#5  0x429d93 in generate_databases_
+	at src/generate_databases/generate_databases.f90:210
+#6  0x4036a5 in xgenerate_databases
+	at src/generate_databases/program_generate_databases.f90:34
+#7  0x4036a5 in main
+	at src/generate_databases/program_generate_databases.f90:39
+--------------------------------------------------------------------------
+prterun detected that one or more processes exited with non-zero status,
+thus causing the job to be terminated. The first process to do so was:
+
+   Process name: [prterun-cn001-3411729@1,0]
+   Exit code:    2
+--------------------------------------------------------------------------

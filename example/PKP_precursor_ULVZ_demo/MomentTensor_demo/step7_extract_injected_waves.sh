@@ -15,7 +15,7 @@ set -euo pipefail
 TIME_LIMIT="02:00:00"
 MEM_PER_CPU="8G"
 MODULES=""
-MPIRUN_CMD="mpirun"
+MPIRUN_CMD="mpirun --bind-to none"
 
 # --- 2. Path Setup ---
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -190,6 +190,12 @@ for this_source in "${SOURCES[@]}"; do
     fi
 done
 
+if [[ "${SINGLE_FORCE_MODE}" == "0" || "${SINGLE_FORCE_MODE}" == "-1" ]]; then
+    # Reuse DSM basis traces and refresh this case's source combination.
+    (cd "${ROOT_DIR}" && "${PYTHON_BIN:-python3}" auxiliary/synthesize_cmtsolution_sac.py \
+        --sem-par-file DATA/Par_file_SEM_DSM --if-needed --clean)
+fi
+
 mkdir -p "${DATA_DIR}" "${OUTPUT_DIR}"
 
 echo "Preparing cut-window metadata..."
@@ -297,6 +303,16 @@ print_job_runtime() {
     printf 'Job exit status: %d\n' "\${job_status}"
 }
 trap print_job_runtime EXIT
+
+source /etc/profile.d/lmod.sh
+module purge
+module load gnu14/14.2.0 openmpi5/5.0.7
+export SLURM_EXPORT_ENV=ALL
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export PYTHON_BIN=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+export PATH=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin:\${PATH}
+
 
 $( [[ -n "${MODULES}" ]] && echo "module load ${MODULES}" || echo "# No modules to load" )
 set -e

@@ -2,6 +2,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [[ "${1:-}" == "--synthesis-only" ]]; then
+    cd "${ROOT_DIR}"
+    exec "${PYTHON_BIN:-python3}" auxiliary/synthesize_cmtsolution_sac.py \
+        --sem-par-file DATA/Par_file_SEM_DSM --clean
+fi
+
 PARAM_FILE="${ROOT_DIR}/DATA/Par_file_SEM_DSM"
 
 param() {

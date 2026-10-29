@@ -1,4 +1,4 @@
-#!/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+#!/usr/bin/env python3
 """Convert SPECFEM ASCII HXX/HXY/HXZ semv files to SAC."""
 
 from __future__ import annotations

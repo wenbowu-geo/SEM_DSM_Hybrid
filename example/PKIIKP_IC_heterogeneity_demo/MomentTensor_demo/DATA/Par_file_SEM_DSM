@@ -180,7 +180,7 @@ COUPLING_DIST_WAVELENGTH_FRACTION = 0.05
 # DSM and InjectedWaves settings
 # -----------------------------------------------------------------------------
 # Shared Slurm controls for all DSM Green's function computations.
-DSM_NPROC=512
+DSM_NPROC=256
 DSM_TIME_LIMIT = 23:59:00
 DSM_MEM_PER_CPU = 4G
 

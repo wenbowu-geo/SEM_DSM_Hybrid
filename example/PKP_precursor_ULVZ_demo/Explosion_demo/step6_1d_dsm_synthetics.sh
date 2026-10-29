@@ -7,6 +7,12 @@ set -euo pipefail
 
 # --- 1. Path Setup ---
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [[ "${1:-}" == "--synthesis-only" ]]; then
+    cd "${ROOT_DIR}"
+    exec "${PYTHON_BIN:-python3}" auxiliary/synthesize_cmtsolution_sac.py \
+        --sem-par-file DATA/Par_file_SEM_DSM --clean
+fi
+
 PARAM_FILE="${ROOT_DIR}/DATA/Par_file_SEM_DSM"
 WORK_DIR="${ROOT_DIR}/WORK/DSM/1D_tele_syn"
 DSM_SOLVER_DIR="$(cd "${ROOT_DIR}/../../../src/DSM/src/DSM_Solver" && pwd)"
@@ -552,7 +558,7 @@ trap print_job_runtime EXIT
 
 # Run from the demo root; the helper reads DSM component files from WORK/DSM/1D_tele_syn.
 cd ${ROOT_DIR}
-python3 auxiliary/synthesize_cmtsolution_sac.py --input-subdir "${FREQ2SAC_SOLID_QUANTITY}_solid_time_sac" --clean --reference-component "${SYNTHESIS_REFERENCE_COMPONENT}"
+python3 auxiliary/synthesize_cmtsolution_sac.py --dsm-root WORK/DSM/1D_tele_syn --input-subdir "${FREQ2SAC_SOLID_QUANTITY}_solid_time_sac" --clean --reference-component "${SYNTHESIS_REFERENCE_COMPONENT}"
 EOF
     syn_jobid=$(sbatch --parsable submit_synthesis.cmd)
     echo "    Submitted synthesis job: ${syn_jobid} (depends on: ${dep_list})"

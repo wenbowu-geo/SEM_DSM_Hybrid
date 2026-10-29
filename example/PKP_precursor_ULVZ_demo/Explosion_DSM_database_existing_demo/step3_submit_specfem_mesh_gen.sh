@@ -12,7 +12,7 @@ MEM_PER_CPU="4G"
 
 # Modules to load (leave empty if none required)
 # e.g., MODULES="intel/2021.4.0 openmpi/4.1.1"
-MODULES=""
+MODULES="gnu14/14.2.0 openmpi5/5.0.7"
 
 # --- 2. Path Setup ---
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -175,6 +175,9 @@ print_job_runtime() {
 }
 trap print_job_runtime EXIT
 
+source /etc/profile.d/lmod.sh
+module purge
+export SLURM_EXPORT_ENV=ALL
 ${MODULE_CMD}
 set -e
 mpirun "${BIN_DIR}/xmeshfem3D"
@@ -205,6 +208,9 @@ print_job_runtime() {
 }
 trap print_job_runtime EXIT
 
+source /etc/profile.d/lmod.sh
+module purge
+export SLURM_EXPORT_ENV=ALL
 ${MODULE_CMD}
 set -e
 mpirun "${DATABASE_BIN}"

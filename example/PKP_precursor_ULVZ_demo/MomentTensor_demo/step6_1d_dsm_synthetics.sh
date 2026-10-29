@@ -14,6 +14,12 @@ set -euo pipefail
 
 # --- 1. Path Setup ---
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [[ "${1:-}" == "--synthesis-only" ]]; then
+    cd "${ROOT_DIR}"
+    exec "${PYTHON_BIN:-python3}" auxiliary/synthesize_cmtsolution_sac.py \
+        --sem-par-file DATA/Par_file_SEM_DSM --clean
+fi
+
 PARAM_FILE="${ROOT_DIR}/DATA/Par_file_SEM_DSM"
 WORK_DIR="${ROOT_DIR}/WORK/DSM/1D_tele_syn"
 DSM_SOLVER_DIR="$(cd "${ROOT_DIR}/../../../src/DSM/src/DSM_Solver" && pwd)"
@@ -196,7 +202,7 @@ FREQ2SAC_SOLID_QUANTITY="disp"
 FREQ2SAC_NCOMP=3
 
 # HPC settings
-MPIRUNCMD="mpirun"
+MPIRUNCMD="mpirun --bind-to none"
 MODULES=""
 
 # --- 4. Validation ---
@@ -466,6 +472,16 @@ print_job_runtime() {
 }
 trap print_job_runtime EXIT
 
+source /etc/profile.d/lmod.sh
+module purge
+module load gnu14/14.2.0 openmpi5/5.0.7
+export SLURM_EXPORT_ENV=ALL
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export PYTHON_BIN=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+export PATH=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin:\${PATH}
+
+
 ${MPIRUNCMD} ./dsmti < DATA/dsm_model
 EOF
 
@@ -494,6 +510,16 @@ print_job_runtime() {
     printf 'Job exit status: %d\n' "\${job_status}"
 }
 trap print_job_runtime EXIT
+
+source /etc/profile.d/lmod.sh
+module purge
+module load gnu14/14.2.0 openmpi5/5.0.7
+export SLURM_EXPORT_ENV=ALL
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export PYTHON_BIN=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+export PATH=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin:\${PATH}
+
 
 submit_job=0 \\
 write_submit_script=0 \\
@@ -557,9 +583,19 @@ print_job_runtime() {
 }
 trap print_job_runtime EXIT
 
+source /etc/profile.d/lmod.sh
+module purge
+module load gnu14/14.2.0 openmpi5/5.0.7
+export SLURM_EXPORT_ENV=ALL
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export PYTHON_BIN=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+export PATH=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin:\${PATH}
+
+
 # Run from the demo root; the helper reads DSM component files from WORK/DSM/1D_tele_syn.
 cd ${ROOT_DIR}
-python3 auxiliary/synthesize_cmtsolution_sac.py --input-subdir "${FREQ2SAC_SOLID_QUANTITY}_solid_time_sac" --clean --reference-component "${SYNTHESIS_REFERENCE_COMPONENT}"
+python3 auxiliary/synthesize_cmtsolution_sac.py --dsm-root WORK/DSM/1D_tele_syn --input-subdir "${FREQ2SAC_SOLID_QUANTITY}_solid_time_sac" --clean --reference-component "${SYNTHESIS_REFERENCE_COMPONENT}"
 EOF
     syn_jobid=$(sbatch --parsable submit_synthesis.cmd)
     echo "    Submitted synthesis job: ${syn_jobid} (depends on: ${dep_list})"

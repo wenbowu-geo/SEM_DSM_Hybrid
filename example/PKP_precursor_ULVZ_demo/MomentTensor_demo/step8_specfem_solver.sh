@@ -18,7 +18,7 @@ OUTPUT_DIR="${WORK_DIR}/OUTPUT_FILES"
 BIN_DIR="$(cd "${ROOT_DIR}/../../../src/SPECFEM3D/bin" && pwd)"
 
 MODULES=""
-MPIRUN_CMD="mpirun"
+MPIRUN_CMD="mpirun --bind-to none"
 
 echo "----------------------------------------------------------------------"
 echo "Starting Step 8: SPECFEM3D Coupled Solver"
@@ -516,6 +516,16 @@ print_job_runtime() {
     printf 'Job exit status: %d\n' "\${job_status}"
 }
 trap print_job_runtime EXIT
+
+source /etc/profile.d/lmod.sh
+module purge
+module load gnu14/14.2.0 openmpi5/5.0.7
+export SLURM_EXPORT_ENV=ALL
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export PYTHON_BIN=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+export PATH=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin:\${PATH}
+
 
 $( [[ -n "${MODULES}" ]] && echo "module load ${MODULES}" || echo "# No modules to load" )
 set -e

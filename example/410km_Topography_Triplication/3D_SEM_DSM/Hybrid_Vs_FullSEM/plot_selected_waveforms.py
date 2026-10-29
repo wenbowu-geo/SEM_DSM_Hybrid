@@ -1,4 +1,4 @@
-#!/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+#!/usr/bin/env python3
 """Plot selected FullSEM3D, DSM1D, and Hybrid_SEM_DSM waveforms.
 
 Default comparison uses the vertical component:

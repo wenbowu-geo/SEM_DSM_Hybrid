@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Step 6: Compute 1-D teleseismic synthetics using DSM.
-# This script sets up and runs DSM for the selected source mode.
+# Step 6: Form the requested 1-D synthetic from the existing six-Mij DSM
+# database. This database-reuse example does not recompute the basis traces.
 
 # Observed runtime estimate from completed Slurm logs for this case.
 # Queue wait time is not included; actual runtime can vary with filesystem and cluster load.
@@ -14,6 +14,18 @@ set -euo pipefail
 
 # --- 1. Path Setup ---
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [[ $# -gt 0 && "${1}" != "--synthesis-only" ]]; then
+    echo "Usage: $0 [--synthesis-only]" >&2
+    exit 2
+fi
+
+echo "Combining the existing six-Mij DSM basis synthetics (no DSM jobs will be submitted)."
+cd "${ROOT_DIR}"
+exec "${PYTHON_BIN:-python3}" auxiliary/synthesize_cmtsolution_sac.py \
+    --sem-par-file DATA/Par_file_SEM_DSM --clean
+
+# The DSM-generation implementation below is retained for provenance but is
+# intentionally unreachable in this database-existing example.
 PARAM_FILE="${ROOT_DIR}/DATA/Par_file_SEM_DSM"
 WORK_DIR="${ROOT_DIR}/WORK/DSM/1D_tele_syn"
 DSM_SOLVER_DIR="$(cd "${ROOT_DIR}/../../../src/DSM/src/DSM_Solver" && pwd)"
@@ -578,7 +590,7 @@ trap print_job_runtime EXIT
 
 # Run from the demo root; the helper reads DSM component files from WORK/DSM/1D_tele_syn.
 cd ${ROOT_DIR}
-python3 auxiliary/synthesize_cmtsolution_sac.py --input-subdir "${FREQ2SAC_SOLID_QUANTITY}_solid_time_sac" --clean --reference-component "${SYNTHESIS_REFERENCE_COMPONENT}"
+python3 auxiliary/synthesize_cmtsolution_sac.py --dsm-root WORK/DSM/1D_tele_syn --input-subdir "${FREQ2SAC_SOLID_QUANTITY}_solid_time_sac" --clean --reference-component "${SYNTHESIS_REFERENCE_COMPONENT}"
 EOF
     syn_jobid=$(sbatch --parsable submit_synthesis.cmd)
     echo "    Submitted synthesis job: ${syn_jobid} (depends on: ${dep_list})"

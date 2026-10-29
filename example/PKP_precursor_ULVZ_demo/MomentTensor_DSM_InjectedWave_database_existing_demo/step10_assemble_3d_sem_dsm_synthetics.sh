@@ -47,39 +47,22 @@ fi
 
 DSM_DATABASE_DIR=$(resolve_case_path "${DSM_DATABASE_DIR_RAW}")
 INJECTED_METADATA=$(resolve_case_path "${INJECTED_METADATA_RAW}")
+# Match the wavefield directory selected by Step 8, including reused injection.
+INJECTION_OUTPUT=$(param INJECTED_WAVEFIELD_PATH "WORK/InjectedWaves/OUTPUT_FILES")
+if [[ "${INJECTION_OUTPUT}" != /* ]]; then
+  INJECTION_OUTPUT="${ROOT_DIR}/${INJECTION_OUTPUT}"
+fi
+GREEN_METADATA="${INJECTION_OUTPUT%/}/InjectedWaves_Par_file"
+if [[ ! -f "${GREEN_METADATA}" ]]; then
+  echo "Error: actual injected-wavefield timing metadata not found: ${GREEN_METADATA}" >&2
+  exit 1
+fi
+
 SOURCE_MODE=$(param SINGLE_FORCE_ENZ -1)
-case "${SOURCE_MODE}" in
-  -1)
-    ONE_D_DIR="${DSM_DATABASE_DIR}/1D_tele_syn/explosion/OUTPUT_FILES/disp_solid_time_sac"
-    ONE_D_DSM_MODEL="${DSM_DATABASE_DIR}/1D_tele_syn/explosion/DATA/dsm_model"
-    ONE_D_SCALE="none"
-    ;;
-  0)
-    ONE_D_DIR="${DSM_DATABASE_DIR}/1D_tele_syn/OUTPUT_FILES/CMTSOLUTION_time_sac"
-    ONE_D_DSM_MODEL=""
-    ONE_D_SCALE="none"
-    ;;
-  1)
-    ONE_D_DIR="${DSM_DATABASE_DIR}/1D_tele_syn/Fr/OUTPUT_FILES/disp_solid_time_sac"
-    ONE_D_DSM_MODEL=""
-    ONE_D_SCALE="none"
-    ;;
-  2)
-    ONE_D_DIR="${DSM_DATABASE_DIR}/1D_tele_syn/Ft/OUTPUT_FILES/disp_solid_time_sac"
-    ONE_D_DSM_MODEL=""
-    ONE_D_SCALE="none"
-    ;;
-  3)
-    ONE_D_DIR="${DSM_DATABASE_DIR}/1D_tele_syn/Fz/OUTPUT_FILES/disp_solid_time_sac"
-    ONE_D_DSM_MODEL=""
-    ONE_D_SCALE="none"
-    ;;
-  *)
-    echo "Error: Unsupported SINGLE_FORCE_ENZ=${SOURCE_MODE}." >&2
-    echo "Supported values: -1 explosion, 0 moment-tensor Green functions, 1 North, 2 East, 3 Vertical." >&2
-    exit 1
-    ;;
-esac
+# Reuse final synthetics only when their source, receivers and provenance match.
+ONE_D_DIR=$("${PYTHON_BIN}" "${ROOT_DIR}/auxiliary/check_existing_1d_synthetics.py" --print-path)
+ONE_D_DSM_MODEL=""
+ONE_D_SCALE="none"
 
 echo "----------------------------------------------------------------------"
 echo "Starting Step 10: Assemble 3-D SEM-DSM synthetics"
@@ -93,6 +76,7 @@ cd "${ROOT_DIR}"
 HELPER="auxiliary/assemble_3d_sem_dsm_synthetics.py"
 args=(
   "${HELPER}"
+  --green-metadata "${GREEN_METADATA}"
   --one-d-dir "${ONE_D_DIR}"
   --coupling-dir "${ROOT_DIR}/WORK/Coupling/OUTPUT_FILES"
   --metadata "${INJECTED_METADATA}"

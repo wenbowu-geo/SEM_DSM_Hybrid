@@ -83,6 +83,10 @@ SPECFEM3D_SOLVER_DT =
 SPECFEM3D_SOLVER_DT_SAFETY_FACTOR = 0.6
 SPECFEM3D_SOLVER_MAX_DT = 0.4
 
+# Reuse the six moment-tensor DSM basis synthetics computed by the sibling
+# MomentTensor_demo. Step 6 only forms their linear combination.
+DSM_DATABASE_DIR = ../MomentTensor_demo/WORK/DSM
+
 # SPECFEM3D number of time steps.
 # If set, step 8 writes this value directly to WORK/SPECFEM3D/DATA/Par_file.
 # If left unset, step 8 computes:

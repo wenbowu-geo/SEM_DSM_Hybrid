@@ -12,8 +12,8 @@ WORK_DIR="${ROOT_DIR}/WORK/Coupling"
 DATA_DIR="${WORK_DIR}/DATA"
 OUTPUT_DIR="${WORK_DIR}/OUTPUT_FILES"
 
-MODULES=""
-MPIRUN_CMD="mpirun"
+MODULES="gnu14/14.2.0 openmpi5/5.0.7"
+MPIRUN_CMD="mpirun --bind-to none"
 
 echo "----------------------------------------------------------------------"
 echo "Starting Step 9: SEM-DSM Coupling Integral"

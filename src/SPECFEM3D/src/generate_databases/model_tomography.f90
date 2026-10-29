@@ -1876,11 +1876,11 @@ end if
   real(kind=CUSTOM_REAL), intent(out) :: vp_final,vs_final,rho_final
 
   !no top taperin. Set them as negative numbers.
-  double precision, parameter ::top_taper_depth_start = -2000.0
-  double precision, parameter ::top_taper_depth_end =   -1000.0
+  double precision, parameter ::top_taper_depth_start = 30000.0
+  double precision, parameter ::top_taper_depth_end =   50000.0
   !bottom tapering. Starts at 520 km below the top boundary of the SEM box.
-  double precision, parameter ::bot_taper_depth_start = 520000.0
-  double precision, parameter ::bot_taper_depth_end =   530000.0
+  double precision, parameter ::bot_taper_depth_start = 1000000.0
+  double precision, parameter ::bot_taper_depth_end =   1100000.0
   !tapering at edges. Taper width and homogeneous-region width, in unit of
   !degree.
   double precision, parameter ::taper_width_edges = 0.2

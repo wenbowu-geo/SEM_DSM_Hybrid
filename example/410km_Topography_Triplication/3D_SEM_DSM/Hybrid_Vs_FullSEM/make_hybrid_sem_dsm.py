@@ -1,4 +1,4 @@
-#!/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+#!/usr/bin/env python3
 """Build full SEM-DSM synthetics from 1-D DSM plus 3-D SEM-DSM scattering waves."""
 
 from __future__ import annotations

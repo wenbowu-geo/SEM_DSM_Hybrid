@@ -1,0 +1,9 @@
+--------------------------------------------------------------------------
+prterun was unable to launch the specified application as it lacked
+permissions to execute an executable:
+
+   Executable: ../../../../../src/SPECFEM3D/bin//xgenerate_databases_PKIKP3D
+   Node: cn042
+
+while attempting to start process rank 0.
+--------------------------------------------------------------------------

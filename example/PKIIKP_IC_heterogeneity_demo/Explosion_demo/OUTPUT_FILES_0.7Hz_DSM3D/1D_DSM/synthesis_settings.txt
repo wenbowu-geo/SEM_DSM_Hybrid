@@ -1,0 +1,1 @@
+v2 -1 disp_solid_time_sac 10000000.0 ../../WORK/DSM/1D_tele_syn/explosion 70714f61763b2eb5f222935975ee8cb96b15da06f1f52036f0af74161000eb67

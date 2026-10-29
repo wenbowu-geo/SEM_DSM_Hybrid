@@ -35,15 +35,32 @@ echo "Starting Step 10: Assemble 3-D SEM-DSM synthetics"
 echo "Root Directory: ${ROOT_DIR}"
 echo "----------------------------------------------------------------------"
 
+# Match the wavefield directory selected by Step 8, including reused injection.
+INJECTION_OUTPUT=$(param INJECTED_WAVEFIELD_PATH "WORK/InjectedWaves/OUTPUT_FILES")
+if [[ "${INJECTION_OUTPUT}" != /* ]]; then
+  INJECTION_OUTPUT="${ROOT_DIR}/${INJECTION_OUTPUT}"
+fi
+GREEN_METADATA="${INJECTION_OUTPUT%/}/InjectedWaves_Par_file"
+if [[ ! -f "${GREEN_METADATA}" ]]; then
+  echo "Error: actual injected-wavefield timing metadata not found: ${GREEN_METADATA}" >&2
+  exit 1
+fi
+
 SOURCE_MODE=$(param SINGLE_FORCE_ENZ -1)
 case "${SOURCE_MODE}" in
   -1)
-    ONE_D_DIR="WORK/DSM/1D_tele_syn/explosion/OUTPUT_FILES/disp_solid_time_sac"
-    ONE_D_DSM_MODEL="WORK/DSM/1D_tele_syn/explosion/DATA/dsm_model"
+    # Refresh this case's 1-D source combination using reusable DSM traces.
+    (cd "${ROOT_DIR}" && "${PYTHON_BIN:-python3}" auxiliary/synthesize_cmtsolution_sac.py \
+        --sem-par-file DATA/Par_file_SEM_DSM --if-needed --clean)
+    ONE_D_DIR="${ROOT_DIR}/WORK/DSM/1D_tele_syn/OUTPUT_FILES/CMTSOLUTION_time_sac"
+    ONE_D_DSM_MODEL=""
     ONE_D_SCALE="none"
     ;;
   0)
-    ONE_D_DIR="WORK/DSM/1D_tele_syn/OUTPUT_FILES/CMTSOLUTION_time_sac"
+    # Reuse DSM basis traces and refresh this case's source combination.
+    (cd "${ROOT_DIR}" && "${PYTHON_BIN:-python3}" auxiliary/synthesize_cmtsolution_sac.py \
+        --sem-par-file DATA/Par_file_SEM_DSM --if-needed --clean)
+    ONE_D_DIR="${ROOT_DIR}/WORK/DSM/1D_tele_syn/OUTPUT_FILES/CMTSOLUTION_time_sac"
     ONE_D_DSM_MODEL=""
     ONE_D_SCALE="none"
     ;;
@@ -76,6 +93,7 @@ cd "${ROOT_DIR}"
 HELPER="auxiliary/assemble_3d_sem_dsm_synthetics.py"
 args=(
   "${HELPER}"
+  --green-metadata "${GREEN_METADATA}"
   --one-d-dir "${ONE_D_DIR}"
 )
 if grep -q -- '--one-d-scale' "${HELPER}"; then

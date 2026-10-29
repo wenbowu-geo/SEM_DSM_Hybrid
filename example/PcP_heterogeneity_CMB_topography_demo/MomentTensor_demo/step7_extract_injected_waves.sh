@@ -190,6 +190,12 @@ for this_source in "${SOURCES[@]}"; do
     fi
 done
 
+if [[ "${SINGLE_FORCE_MODE}" == "0" || "${SINGLE_FORCE_MODE}" == "-1" ]]; then
+    # Reuse DSM basis traces and refresh this case's source combination.
+    (cd "${ROOT_DIR}" && "${PYTHON_BIN:-python3}" auxiliary/synthesize_cmtsolution_sac.py \
+        --sem-par-file DATA/Par_file_SEM_DSM --if-needed --clean)
+fi
+
 mkdir -p "${DATA_DIR}" "${OUTPUT_DIR}"
 
 echo "Preparing cut-window metadata..."

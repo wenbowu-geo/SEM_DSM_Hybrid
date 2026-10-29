@@ -10,6 +10,7 @@ with the exponent used in run.cmd. The default basis moment is 1.e7 dyn*cm
 from __future__ import annotations
 
 import argparse
+import hashlib
 import math
 import re
 import shutil
@@ -212,22 +213,61 @@ def combine_for_base(
     return update_sac_depmin_depmax_depmen(header, output), output
 
 
+
+def explosion_amplitude_ratio(cmt: dict[str, float], original: list[float]) -> float:
+    """Scale original DSM explosion traces, never a previously scaled result."""
+    keys = ("Mrr", "Mtt", "Mpp", "Mrt", "Mrp", "Mtp")
+    requested = [cmt[key] for key in keys]
+
+    def check_isotropic(values: list[float], label: str) -> None:
+        if len(values) != 6 or not all(math.isfinite(value) for value in values):
+            raise RuntimeError(f"{label} must contain six finite moment components")
+        tolerance = 1.e-6 * max(abs(value) for value in values)
+        if (any(abs(value - values[0]) > tolerance for value in values[1:3])
+                or any(abs(value) > tolerance for value in values[3:])):
+            raise RuntimeError(f"{label} is not isotropic; explosion reuse requires equal diagonal and zero off-diagonal moments")
+
+    check_isotropic(original, "Original DSM explosion")
+    check_isotropic(requested, "Requested CMTSOLUTION")
+    if original[0] == 0.0:
+        raise RuntimeError("Original DSM explosion moment is zero; compute nonzero DSM reference traces first")
+    ratio = requested[0] / original[0]
+    if not math.isfinite(ratio):
+        raise RuntimeError("Explosion amplitude ratio must be finite")
+    return ratio
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Build CMTSOLUTION time-domain SAC synthetics from DSM moment-basis SAC files."
     )
     parser.add_argument("--cmt", default="DATA/CMTSOLUTION")
-    parser.add_argument("--sem-par-file", default="WORK/SPECFEM3D/DATA/Par_file")
+    parser.add_argument("--sem-par-file", default="DATA/Par_file_SEM_DSM")
     parser.add_argument("--reference-component", default="Mrr")
-    parser.add_argument("--dsm-root", default="WORK/DSM/1D_tele_syn")
+    parser.add_argument("--dsm-root", default=None)
     parser.add_argument("--input-subdir", default="disp_solid_time_sac")
     parser.add_argument("--output-dir", default="OUTPUT_FILES/CMTSOLUTION_time_sac")
     parser.add_argument("--basis-moment-dyn-cm", type=float, default=1.0e7)
     parser.add_argument("--clean", action="store_true", help="Remove existing files in output-dir before writing.")
+    parser.add_argument("--if-needed", action="store_true", help="Skip when the saved source and synthesis settings match.")
     args = parser.parse_args()
 
     run_root = Path.cwd()
-    dsm_root = (run_root / args.dsm_root).resolve()
+    configured_root = "WORK/DSM/1D_tele_syn"
+    configured_database = ""
+    has_root_setting = False
+    config = run_root / "DATA/Par_file_SEM_DSM"
+    if config.exists():
+        for line in config.read_text().splitlines():
+            key, sep, value = line.partition("=")
+            if sep and key.strip() == "DSM_DATABASE_DIR":
+                configured_database = value.split("#", 1)[0].strip()
+            if sep and key.strip() == "DSM_1D_SYNTHETICS_DIR":
+                has_root_setting = True
+                configured_root = value.split("#", 1)[0].strip() or configured_root
+    if configured_database and not has_root_setting:
+        configured_root = str(Path(configured_database) / "1D_tele_syn")
+    dsm_root = (run_root / (args.dsm_root or configured_root)).resolve()
     cmt_path = (run_root / args.cmt).resolve()
     par_path = (run_root / args.sem_par_file).resolve()
     ref_dir = dsm_root / args.reference_component
@@ -235,8 +275,10 @@ def main() -> None:
     station_path = ref_dir / "DATA" / "station_distances.txt"
     output_dir = Path(args.output_dir)
     if not output_dir.is_absolute():
-        output_dir = dsm_root / output_dir
+        output_root = dsm_root if args.dsm_root else run_root / "WORK/DSM/1D_tele_syn"
+        output_dir = output_root / output_dir
 
+    cmt_bytes = cmt_path.read_bytes()
     cmt = read_cmtsolution(cmt_path)
     source_mode = read_single_force_enz(par_path)
     if source_mode not in (-1, 0):
@@ -247,6 +289,39 @@ def main() -> None:
         ref_dir = dsm_root / "explosion"
         depth_path = ref_dir / "DATA" / "depth_solid_list"
         station_path = ref_dir / "DATA" / "station_distances.txt"
+    # Check the actual DSM source geometry, including legacy runs without a snapshot.
+    model_lines = (ref_dir / "DATA" / "dsm_model").read_text().splitlines()
+    source_index = 4 + 6 * int(model_lines[3].split()[0])
+    geometry = [float(v.replace("D", "e").replace("d", "e")) for v in model_lines[source_index].split()[:3]]
+    # An explosion in a spherically symmetric 1-D model is invariant under a
+    # rigid rotation, so a database generated at another latitude/longitude is
+    # reusable.  Its source depth must still match.  Moment-tensor synthesis
+    # uses the source/station azimuth and therefore retains the full geometry
+    # check.
+    geometry_keys = ("depth",) if source_mode == -1 else ("depth", "latitude", "longitude")
+    if any(
+        not math.isclose(geometry[index], cmt[key], rel_tol=0.0, abs_tol=1.e-6)
+        for index, key in enumerate(geometry_keys)
+    ):
+        changed = "depth" if source_mode == -1 else "location/depth"
+        raise RuntimeError(f"Source {changed} changed: rerun Step 6 DSM components before synthesis")
+    explosion_ratio = 1.0
+    if source_mode == -1:
+        moment = [float(v.replace("D", "e").replace("d", "e")) for v in model_lines[source_index + 1].split()[:7]]
+        if len(moment) != 7:
+            raise RuntimeError("Incomplete original DSM explosion moment vector")
+        original = [value * 10.0 ** moment[0] for value in moment[1:]]
+        explosion_ratio = explosion_amplitude_ratio(cmt, original)
+    snapshot = output_dir / "CMTSOLUTION"
+    model_digest = hashlib.sha256((ref_dir / "DATA" / "dsm_model").read_bytes()).hexdigest()
+    settings = f"v2 {source_mode} {args.input_subdir} {args.basis_moment_dyn_cm!r} {ref_dir} {model_digest}\n"
+    settings_path = output_dir / "synthesis_settings.txt"
+    if (args.if_needed and snapshot.exists() and snapshot.read_bytes() == cmt_bytes
+            and settings_path.exists() and settings_path.read_text() == settings
+            and all(any(output_dir.glob(f"*{ext}")) for ext in SAC_EXTENSIONS)):
+        print(f"1-D synthetics already match CMTSOLUTION: {output_dir}")
+        return
+
     depths = read_depths(depth_path)
     stations = read_stations(station_path)
 
@@ -269,7 +344,7 @@ def main() -> None:
 
             if source_mode == -1:
                 # Step 6 computes the complete explosion moment tensor in one DSM run.
-                coefficients = {"explosion": 1.0}
+                coefficients = {"explosion": explosion_ratio}
                 component_dirs = ("explosion",)
                 mode_text = "explosion"
             else:
@@ -284,8 +359,16 @@ def main() -> None:
                 write_sac(output_dir / f"{out_base}{ext}", header, trace)
                 nout += 1
 
+    if nout == 0 or nskip:
+        raise RuntimeError("Incomplete SAC synthesis; source snapshot was not saved")
+    snapshot.write_bytes(cmt_bytes)
+    settings_path.write_text(settings)
+
     print(f"Source mode: {mode_text} (SINGLE_FORCE_ENZ={source_mode})")
-    print(f"Basis moment: {args.basis_moment_dyn_cm:.6e} dyn*cm")
+    if source_mode == -1:
+        print(f"Explosion amplitude ratio (current / original DSM): {explosion_ratio:.12g}")
+    else:
+        print(f"Basis moment: {args.basis_moment_dyn_cm:.6e} dyn*cm")
     print(f"Wrote {nout} SAC files to {output_dir}")
     if nskip:
         print(f"Skipped {nskip} stale station/depth rows without converted SAC files")

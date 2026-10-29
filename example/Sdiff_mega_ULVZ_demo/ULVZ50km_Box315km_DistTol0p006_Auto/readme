@@ -1,0 +1,15 @@
+  > The cutout may be too shallow to contain the complete near-CMB
+  > Sdiff–ULVZ interaction. Stacey boundaries can introduce both
+  > spurious reflections, especially for grazing components, and loss
+  > of physical exterior-mediated feedback when scattered waves would
+  > leave and later re-enter the retained domain.
+
+  The clean diagnostic is a radial-boundary convergence test: keep the
+  ULVZ and lateral mesh identical, progressively move only the top and
+  bottom boundaries outward. If the waveforms converge as radial
+  padding increases—even with the same Stacey formulation—then
+  mechanism (2), together with reduced grazing-boundary interaction, is
+  implicated. Comparing Stacey with a better absorber at fixed
+  dimensions helps separate the two mechanisms, but PML alone still
+  cannot reproduce genuine exterior return paths; that requires
+  enlarging the domain or coupling it to an exterior solver.

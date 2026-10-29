@@ -181,9 +181,19 @@ print_job_runtime() {
 }
 trap print_job_runtime EXIT
 
+source /etc/profile.d/lmod.sh
+module purge
+module load gnu14/14.2.0 openmpi5/5.0.7
+export SLURM_EXPORT_ENV=ALL
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export PYTHON_BIN=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+export PATH=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin:\${PATH}
+
+
 ${MODULE_CMD}
 set -e
-mpirun "${BIN_DIR}/xmeshfem3D"
+srun --mpi=pmix --cpu-bind=none "${BIN_DIR}/xmeshfem3D"
 EOF
 
 # Create SLURM script for Database Generator
@@ -211,9 +221,19 @@ print_job_runtime() {
 }
 trap print_job_runtime EXIT
 
+source /etc/profile.d/lmod.sh
+module purge
+module load gnu14/14.2.0 openmpi5/5.0.7
+export SLURM_EXPORT_ENV=ALL
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export PYTHON_BIN=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin/python
+export PATH=/user/wenbo.wu/.conda/envs/sqhao_seismo/bin:\${PATH}
+
+
 ${MODULE_CMD}
 set -e
-mpirun "${DATABASE_BIN}"
+srun --mpi=pmix --cpu-bind=none "${DATABASE_BIN}"
 EOF
 
 chmod +x run_meshfem3D.sbatch run_generate_databases.sbatch
