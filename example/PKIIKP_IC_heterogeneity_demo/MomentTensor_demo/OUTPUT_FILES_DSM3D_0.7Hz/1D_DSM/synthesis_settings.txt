@@ -1,0 +1,1 @@
+v2 0 disp_solid_time_sac 10000000.0 /proj/mazu/wenbowu/SEM_DSM_github/SEM_DSM_Hybrid/example/PKIIKP_IC_heterogeneity_demo/MomentTensor_demo/WORK/DSM/1D_tele_syn/Mrr 003b003fa4f3ce1eafec43a08bd0bdad19751014fdde6058eb9bfdc9627a3bef
